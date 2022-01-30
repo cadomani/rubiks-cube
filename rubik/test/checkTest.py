@@ -186,6 +186,16 @@ class CheckTest(TestCase):
         status = result.get('status', None)
         self.assertEqual('error: invalid cube configuration - the cube does not contain six unique center pieces', status)
 
+    def test_check_941_ShouldReturnErrorOnInvalidArrangementOfCenterPieces(self):
+        parm = {
+            'op': 'check',
+            'cube': 'OBRRBBBGWGBRWWRRGOYGWYGWGYBRGWOYBOROBOBYBYGOYWWGWORYOY'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain six unique center pieces', status)
+
     def test_check_950_ShouldReturnErrorOnInvalidArrangementOfCornerPieces(self):
         parm = {
             'op': 'check',
@@ -240,6 +250,16 @@ class CheckTest(TestCase):
         parm = {
             'op': 'check',
             'cube': '544204041130514012452220402110535323513041102534352533'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of edge pieces', status)
+
+    def test_check_963_ShouldReturnErrorOnInvalidArrangementOfEdgePieces(self):
+        parm = {
+            'op': 'check',
+            'cube': 'OBRRBBBGWGORWWRRGOYGWYGWGYBRGWOYOOROBOBYRYGOYWWGWORYOY'
         }
         result = check._check(parm)
         self.assertIn('status', result)
