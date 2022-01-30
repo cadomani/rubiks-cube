@@ -53,12 +53,22 @@ class CheckTest(TestCase):
         status = result.get('status', None)
         self.assertEqual('ok', status)
 
-    def test_check_060_ShouldReturnOkOnValidArrangementOfCornerPieces(self):
+    def test_check_060_ShouldReturnOkOnNonStandardArrangementOfCornerPieces(self):
         # This test is set to match a similar arrangement to EC, but it is perfectly solvable
         # due to the relevant face pieces not being contiguous yet
         parm = {
             'op': 'check',
             'cube': 'bbbbbbbbbrrrrrrrrrgggggggggooooooooowyyyyyyyyywwwwwwww'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('ok', status)
+
+    def test_check_070_ShouldReturnOkOnScrambledCube(self):
+        parm = {
+            'op': 'check',
+            'cube': 'rooywowobbgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg'
         }
         result = check._check(parm)
         self.assertIn('status', result)

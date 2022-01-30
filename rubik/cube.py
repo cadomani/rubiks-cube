@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import re
 from enum import Enum, unique
-from typing import List, Set, Dict
+from typing import List, Set
 from functools import cache
 
 
@@ -24,8 +24,8 @@ class CubeMissing(CubeError):
 
 
 class InvalidCubeComposition(CubeError):
-    def __init__(self, problem_face, problem_cube):
-        super().__init__(f'error: the "{problem_face}" face value does not occur 9 times', problem_cube)
+    def __init__(self, piece_face, piece_type, problem_cube):
+        super().__init__(f'error: the "{piece_face}" {piece_type} value does not occur 9 times', problem_cube)
 
 
 class InvalidCubeDeclaration(CubeError):
@@ -69,15 +69,149 @@ class InvalidCubeCorner(InvalidCubeConfiguration):
         super().__init__(f'the cube does not contain a valid arrangement of corner pieces', problem_cube)
 
 
+class PieceType(Enum):
+    CORNER = "CORNER"
+    EDGE = "EDGE"
+    CENTER = "CENTER"
+
+
 @unique
+class CubeArrangement(Enum):
+    """
+    Models relationsips for the cube
+    Values start at index 1 and must be reduced
+    TODO: These face boundaries are perfectly modeled by a Q3 Hypercube, consider implementing a graph algorithm if these lookups become expensive.
+
+    Corners: 8 (A-H)
+    Edges: 1 or cube_index2 (A-L)
+    Centers: 6 (A-F)
+    """
+    @dataclass
+    class PieceArrangement:
+        """
+        Adds a structure to each identifiable piece.
+
+        piece_type: "CORNER", "EDGE", or "CENTER"
+        indexes: the 1-based index of the cube
+        true_indexes: the 0-based indexes of the cube
+        adjacencies: the faces that this piece is adjacent to
+        """
+        piece_type: PieceType
+        indexes: List[int]
+        true_indexes: List[int]
+        adjacencies: Set[int]
+
+    CORNER_A = PieceArrangement(PieceType.CORNER, [1, 30, 43], [0, 29, 42], {0, 4, 3})
+    CORNER_B = PieceArrangement(PieceType.CORNER, [3, 45, 10], [2, 44, 9], {0, 1, 4})
+    CORNER_C = PieceArrangement(PieceType.CORNER, [7, 46, 36], [6, 45, 35], {0, 3, 5})
+    CORNER_D = PieceArrangement(PieceType.CORNER, [9, 16, 48], [8, 15, 47], {0, 1, 5})
+    CORNER_E = PieceArrangement(PieceType.CORNER, [19, 12, 39], [18, 11, 38], {1, 2, 4})
+    CORNER_F = PieceArrangement(PieceType.CORNER, [21, 37, 28], [20, 36, 27], {2, 3, 4})
+    CORNER_G = PieceArrangement(PieceType.CORNER, [25, 54, 18], [24, 53, 17], {1, 2, 5})
+    CORNER_H = PieceArrangement(PieceType.CORNER, [27, 34, 52], [26, 33, 51], {2, 3, 5})
+    EDGE_A   = PieceArrangement(PieceType.EDGE, [2, 44], [1, 43], {0, 4})
+    EDGE_B   = PieceArrangement(PieceType.EDGE, [4, 33], [3, 32], {0, 3})
+    EDGE_C   = PieceArrangement(PieceType.EDGE, [6, 13], [5, 12], {0, 1})
+    EDGE_D   = PieceArrangement(PieceType.EDGE, [8, 47], [7, 46], {0, 5})
+    EDGE_E   = PieceArrangement(PieceType.EDGE, [11, 42], [10, 41], {1, 4})
+    EDGE_F   = PieceArrangement(PieceType.EDGE, [15, 22], [14, 21], {1, 2})
+    EDGE_G   = PieceArrangement(PieceType.EDGE, [17, 51], [16, 50], {1, 5})
+    EDGE_H   = PieceArrangement(PieceType.EDGE, [20, 38], [19, 37], {2, 4})
+    EDGE_I   = PieceArrangement(PieceType.EDGE, [24, 31], [23, 30], {2, 3})
+    EDGE_J   = PieceArrangement(PieceType.EDGE, [26, 53], [25, 52], {2, 5})
+    EDGE_K   = PieceArrangement(PieceType.EDGE, [29, 40], [28, 39], {3, 4})
+    EDGE_L   = PieceArrangement(PieceType.EDGE, [35, 49], [34, 48], {3, 5})
+    CENTER_A = PieceArrangement(PieceType.CENTER, [5], [4], {0})
+    CENTER_B = PieceArrangement(PieceType.CENTER, [14], [13], {1})
+    CENTER_C = PieceArrangement(PieceType.CENTER, [23], [22], {2})
+    CENTER_D = PieceArrangement(PieceType.CENTER, [32], [31], {3})
+    CENTER_E = PieceArrangement(PieceType.CENTER, [41], [40], {4})
+    CENTER_F = PieceArrangement(PieceType.CENTER, [50], [49], {5})
+
+    @property
+    def piece_type(self):
+        return self.value.piece_type.value
+
+    @property
+    def adjacencies(self):
+        return self.value.adjacencies
+
+    @property
+    def true_indexes(self):
+        return self.value.true_indexes
+
+    @property
+    def indexes(self):
+        return self.value.indexes
+
+    @staticmethod
+    @cache
+    def get_arrangement_from_element(index):
+        """ Locate a piece if we know any one of the elements. Index parameter is zero based. """
+        for arrangement in CubeArrangement:
+            if arrangement.name != 'PieceArrangement' and index in arrangement.true_indexes:
+                return arrangement
+        return None
+
+    @staticmethod
+    def is_valid_adjacency(adjacencies):
+        """ Obtain an arrangement from a set of adjacencies. Cache speeds up operation as set is fully hashable. """
+        for arrangement in CubeArrangement:
+            if arrangement.name != 'PieceArrangement' and adjacencies == arrangement.adjacencies:
+                return arrangement
+        return None
+
+    @staticmethod
+    def get_pieces(pieces, piece_type: PieceType, index: int = None):
+        """ Return all the valid edges or corners for this face. If no index is given, return all edges"""
+        return list(
+            filter(
+                lambda v: (v.face == index if index is not None else True) and v.arrangement.piece_type == piece_type.value,
+                pieces
+            )
+        )
+
+
+@dataclass
+class CubePiece:
+    """
+    Models a single cube piece and all the relevant properties
+
+    index: the cube-index value of this piece, 0-based
+    value: the 'color' of this piece
+    rm_index: the row-major index of this piece
+    face: the primary face index of this piece
+    arrangement: identifies a piece and its arrangement
+    adjacent_faces: the neighboring faces of the piece
+    final_arrangement: identifies the mapped arrangement of this piece by its final position
+    """
+    index: int
+    value: str
+    rm_index: int
+    face: int
+    arrangement: CubeArrangement
+    adjacent_faces: Set[int]
+    final_arrangement: CubeArrangement or None = None
+
+
 class CubeFace(Enum):
-    """ Maps a cube face to its array number, and defines its inverse. """
+    """
+    Maps a cube face to its array number, defines the inverse,
+    and provides helper methods to access its edges, corners, the center, and its color (identity)
+    TODO: This should be a class ideally, not an enum (functionally there is no difference, but we are manipulating instance states)
+    """
     FRONT = 0
     RIGHT = 1
     BACK = 2
     LEFT = 3
     UP = 4
     DOWN = 5
+
+    def __init__(self, _):
+        self._edges = []
+        self._corners = []
+        self._center = None
+        self._color = None
 
     @property
     def opposite(self):
@@ -90,96 +224,123 @@ class CubeFace(Enum):
             CubeFace.DOWN: CubeFace.UP
         }[self]
 
+    @property
+    def color(self):
+        return self._center.value
 
-@unique
-class CubeArrangement(Enum):
-    """ Models relationsips for the cube
-        Values start at index 1 and must be reduced
-
-        Corners: 8 (A-H)
-        Edges: 1 or cube_index2 (A-L)
-        Centers: 6 (A-F)
-    """
-    CORNER_A = [1, 30, 43]
-    CORNER_B = [3, 45, 10]
-    CORNER_C = [7, 46, 36]
-    CORNER_D = [9, 16, 48]
-    CORNER_E = [19, 12, 39]
-    CORNER_F = [21, 37, 28]
-    CORNER_G = [25, 54, 18]
-    CORNER_H = [27, 34, 52]
-    EDGE_A = [2, 44]
-    EDGE_B = [4, 33]
-    EDGE_C = [6, 13]
-    EDGE_D = [8, 47]
-    EDGE_E = [11, 42]
-    EDGE_F = [15, 22]
-    EDGE_G = [17, 51]
-    EDGE_H = [20, 38]
-    EDGE_I = [24, 31]
-    EDGE_J = [26, 53]
-    EDGE_K = [29, 40]
-    EDGE_L = [35, 49]
-    CENTER_A = [5]
-    CENTER_B = [14]
-    CENTER_C = [23]
-    CENTER_D = [32]
-    CENTER_E = [41]
-    CENTER_F = [50]
-    CORNER = 'CORNER'
-    EDGE = 'EDGE'
-    CENTER = 'CENTER'
+    @color.setter
+    def color(self, value: str):
+        self._color = value
 
     @property
-    def piece_type(self):
-        if self.name.startswith(self.CENTER.value):
-            return self.CENTER
-        elif self.name.startswith(self.CORNER.value):
-            return self.CORNER
-        return self.EDGE
+    def center(self):
+        return self._center
 
-    @classmethod
-    def match(cls, cube_index):
-        for arrangement in list(cls):
-            if (cube_index + 1) in arrangement.value:
-                return arrangement
+    @center.setter
+    def center(self, value: CubePiece):
+        self._center = value
+        self.color = value.value
 
+    @property
+    def edges(self):
+        return self._edges
 
-@dataclass
-class CubePiece:
-    index: int                      # The cube-index value of this piece
-    value: str                      # The value of this piece
-    rm_index: int                   # The row-major index of this piece
-    face: CubeFace                  # The face identity enum of this piece
-    opposite: CubeFace              # The face identity of the point on the other side of the board
-    arrangement: CubeArrangement    # Identifies an edge piece
-    parity: int = 0                 # The parity of the edge or corner piece
+    @edges.setter
+    def edges(self, value: List[CubePiece]):
+        self._edges = value
+
+    @property
+    def corners(self):
+        return self._corners
+
+    @corners.setter
+    def corners(self, value: List[CubePiece]):
+        self._corners = value
 
 
 class CubeObj:
-    def __init__(self):
-        self._faces: Set[str] = set()
-        self._edges: Dict[str] = {}
-        self._corners: Dict[str] = {}
+    """ Defines a cube object and provides methods to access and manipulate the cube. """
+    def __init__(self, input_cube: str):
+        """
+        Receives an input_cube string and converts it to a cube object to be manipulated
+
+        _cube_string: an alias of input_cube
+        _cube_map: a 1-to-1 face map of the input string
+        _faces: identifies all the faces of this cube by index or name
+        _pieces: the individual pieces that make up the cube and their properties
+        _pinned_centerpieces: to simplify solve, we assume that the central locations of the cube are the permanent faces and can be pinned
+        _color_map: a dictionary of each color and the number of items for each
+        """
+        self._cube_string = input_cube
+        self._cube_map = None
+        self._faces = CubeFace
         self._pieces: List[CubePiece] = []
+        self._pinned_centerpieces = {}
+        self._map_pieces()
+
+        # Convenience object
+        self.color_map = {}
+
+        # Create cube object from data received
+        self._unpack()
+
+    def _unpack(self):
+        # Create a cube object from input to continue validating
+        for x, value in enumerate(self._cube_string):
+            # Add the cube piece to our object
+            arrangement = CubeArrangement.get_arrangement_from_element(x)
+            adjacent_faces = set()
+            for face in arrangement.true_indexes:
+                adjacent_faces.add(self.face_map[face])
+            self.color_map[value] = self.color_map.get(value, 0) + 1
+
+            # Construct a piece object to add to the cube
+            piece = CubePiece(
+                x,
+                value,
+                rm_index=(x + 1) % 9,
+                face=self.get_face_index(value),
+                arrangement=arrangement,
+                adjacent_faces=adjacent_faces
+            )
+            self.add_piece(piece)
+
+    def _map_pieces(self):
+        for x, i in enumerate(range(4, 53, 9)):
+            self._pinned_centerpieces[self._cube_string[i]] = x
+
+        # Test for non-unique centerpieces
+        if self._pinned_centerpieces.__len__() != 6:
+            raise InvalidCubeCenter(self)
+        self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
+
+    def get_face_index(self, value):
+        return self._pinned_centerpieces[value]
+
+    @property
+    def face_map(self):
+        return self._cube_map
 
     @property
     def faces(self):
         return self._faces
 
     @property
-    def edges(self):
-        return self._edges
-
-    @property
-    def corners(self):
-        return self._corners
-
-    @property
     def pieces(self):
         return self._pieces
 
     def add_piece(self, piece: CubePiece):
+        # Check boundary conditions before adding piece
+        if CubeArrangement.is_valid_adjacency(piece.adjacent_faces) is None:
+            if piece.arrangement.piece_type == PieceType.CORNER.value:
+                raise InvalidCubeCorner(self)
+            elif piece.arrangement.piece_type == PieceType.EDGE.value:
+                raise InvalidCubeEdge(self)
+
+            # This error should NOT happen, but if any test matches this output we can retrace
+            raise InvalidCubeComposition('x', 'center', self)
+
+        # Boundary checks successful, add piece
         self._pieces.append(piece)
 
         # Trigger update to the faces, corners, and edges once we reach cube length
@@ -187,161 +348,54 @@ class CubeObj:
             self._update()
 
     def _update(self):
-        # Reset original fields
-        self._faces = set()
-        self._corners = {}
-        self._edges = {}
+        """ Once the cube object has been filled, calculate faces, corners, and edges. """
+        for i in range(0, 6):
+            self._faces(i).center = CubeArrangement.get_pieces(self._pieces, PieceType.CENTER, i)[0]
+            self._faces(i).edges = CubeArrangement.get_pieces(self._pieces, PieceType.EDGE, i)
+            self._faces(i).corners = CubeArrangement.get_pieces(self._pieces, PieceType.CORNER, i)
 
-        # Recalculate
-        for x, piece in enumerate(self._pieces):
-            # Add face values
-            if (x + 1) % 9 == 5:
-                self._faces.add(piece.value)
+    def __str__(self):
+        return self._cube_string
 
-    @cache
-    def _get_arrangement(self, face: int, arrangement_type: CubeArrangement):
-        return list(
-            filter(
-                lambda v: v.face == CubeFace(face) and v.arrangement.piece_type == arrangement_type,
-                self._pieces
-            )
-        )
-
-    @cache
-    def get_center_by_cube_index(self, index):
-        return self._get_arrangement((index // 9), CubeArrangement.CENTER)[0]
-
-    @cache
-    def get_center_by_face(self, index):
-        return self._get_arrangement(index, CubeArrangement.CENTER)[0]
-
-    @cache
-    def get_corners(self, face_index):
-        return self._get_arrangement(face_index, CubeArrangement.CORNER)
+    def __repr__(self):
+        return f'{self._cube_string}\n{self._cube_map}'
 
 
 class Cube:
     """ Rubik's cube object
 
         Provides methods for identifying, querying, and manipulating a cube and checking its validity
+
+        Definitions:
+            Face - The 9 contiguous or non-contiguous set of pieces on a cube
+            Color - The value of a given face (centerpiece)
+            Index - Zero-based index of the cube
+            v_index - value of the piece for visual purposes
     """
     def __init__(self, values):
-        self._cube_string = values
-        self._center_pieces = set()
-        self._cube = CubeObj()
-
         # Check validity of input
-        if self._cube_string is None:
+        if values is None:
             raise CubeMissing()
 
         # Test to see if value is a string
-        if not isinstance(self._cube_string, str):
-            raise InvalidCubeType(self._cube_string)
+        if not isinstance(values, str):
+            raise InvalidCubeType(values)
 
         # Test for the value length
-        if not len(self._cube_string) == 54:
-            raise InvalidCubeLength(self._cube_string)
+        if not len(values) == 54:
+            raise InvalidCubeLength(values)
 
         # Check for illegal characters. Match 54 characters containing a-z, A-Z, and 0-9 only using Regex. No match returns None.
-        if not re.match(r'[a-zA-Z0-9]{54}', self._cube_string):
-            raise InvalidCubeCharacters(self._cube_string)
+        if not re.match(r'[a-zA-Z0-9]{54}', values):
+            raise InvalidCubeCharacters(values)
 
-        # Create a cube object from this input to continue validating
-        self._input_to_cube_object()
+        # Define a cube using the input value
+        self._cube = CubeObj(values)
 
-        # EC: Verify that the positioning of the elements in the cube is valid by
-        if not self._is_valid_arrangement():
-            raise InvalidCubeCorner(self._cube_string)
-
-    def _input_to_cube_object(self):
-        included = {}
-        for x, value in enumerate(self._cube_string):
-            # Instead of a 4-line if statement, we take advantage of the dictionary's get method to return a value of 0 if the key does not exist and add one to increment
-            included[value] = included.get(value, 0) + 1
-
-            # In the same loop, we collect the modulo 9 of each key and the face value
-            face = x // 9
-            rm_index = (x + 1) % 9
-
-            # Add the cube piece to our object
-            piece = CubePiece(
-                x,
-                value,
-                rm_index=rm_index,
-                face=CubeFace(face),
-                opposite=CubeFace(face).opposite,
-                arrangement=CubeArrangement.match(x),
-                parity=CubeArrangement.match(x).value.index(x + 1)
-            )
-            self._cube.add_piece(piece)
-
-        # We enumerate through object we created before and check that every key occurs exactly 9 times, this has the side effect of checking that values are unique too
-        for face in self._cube.faces:
-            if list(filter(lambda v: v.value == face, self._cube.pieces)).__len__() != 9:
-                raise InvalidCubeComposition(face, self._cube_string)
-
-        # Test if we had 6 unique center values.
-        if len(self._cube.faces) != 6:
-            raise InvalidCubeCenter(self._cube_string)
-
-    def _is_valid_arrangement(self):
-        """ Test to see if a partially-solved cube has invalid positions.
-
-            Algorithm:
-            1. Identify centerpoints and iterate through them
-            2. Identify centerpoint face pieces and corner elements
-            3. Identify centerpoint facce corner elements and the boundary pieces
-            4. Locate centerpoint and opposing face color.
-            5. If face color matches corner elements, it is invalid
-        """
-        # Enumeration for pieces in order F, R, B, L, U, B
-        for x in range(0, 6):
-            valid = self._valid_face_boundaries(
-                self._cube.get_center_by_face(x).value,
-                self._cube.get_center_by_face(CubeFace(x).opposite.value).value,
-                self._cube.get_corners(x),
-            )
-            if not valid:
-                return False
-        return True
-
-    @staticmethod
-    def _to_row_major(cube_index):
-        """ Return the value as an index from 1 to 9. """
-        return 9 if cube_index % 9 == 0 else cube_index % 9
-
-    @staticmethod
-    def _to_cube_index(face_index, row_major_value):
-        """ Return the value as a cube index from 1 to 54. """
-        return (face_index * 9) + row_major_value
-
-    @staticmethod
-    def _to_face_index(cube_index):
-        return cube_index // 9
-
-    def _valid_face_boundaries(self, primary_piece: str, opposite_piece: str, corner_pieces: List[CubePiece]):
-        """ Assert that a single corner of the cube is valid given its positioning.
-
-            Key:
-            Any corners containing the same value as the primary piece should not have any values that
-            are the same as the opposite piece.
-        """
-        for corner in corner_pieces:
-            corner_values = [self._cube.pieces[v - 1].value for v in corner.arrangement.value]
-            for neighbor in corner_values:
-                if neighbor == opposite_piece and primary_piece in corner_values:
-                    return False
-        return True
-
-    def _corner_indexes_to_values(self, corners):
-        """ Obtain cube values from respective cube indexes. """
-        new_corners = []
-        for corner in corners:
-            corner_values = []
-            for value in corner:
-                corner_values.append(self._cube_string[value - 1])
-            new_corners.append(corner_values)
-        return new_corners
+        # Test for invalid cube conditions
+        for piece, count in self._cube.color_map.items():
+            if count != 9:
+                raise InvalidCubeComposition(piece, 'face', self._cube)
 
     def __str__(self):
         return self._cube

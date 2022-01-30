@@ -25,7 +25,7 @@ def _check(parms):
         cube = rubik.Cube(cube_str)
     except CubeError as e:
         return {'status': str(e)}
-    except KeyError:
+    except KeyError as e:
         return {'status': 'error: the cube parameter is missing'}
     else:
         # If no errors occurred, return ok.
