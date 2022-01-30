@@ -24,8 +24,8 @@ class CubeMissing(CubeError):
 
 
 class InvalidCubeComposition(CubeError):
-    def __init__(self, piece_face, piece_type, problem_cube):
-        super().__init__(f'error: the "{piece_face}" {piece_type} value does not occur 9 times', problem_cube)
+    def __init__(self, piece_face, problem_cube):
+        super().__init__(f'error: the "{piece_face}" face value does not occur 9 times', problem_cube)
 
 
 class InvalidCubeDeclaration(CubeError):
@@ -70,6 +70,7 @@ class InvalidCubeCorner(InvalidCubeConfiguration):
 
 
 class PieceType(Enum):
+    """ Defines the types of pieces available for a 3x3 cube. """
     CORNER = "CORNER"
     EDGE = "EDGE"
     CENTER = "CENTER"
@@ -155,7 +156,7 @@ class CubeArrangement(Enum):
 
     @staticmethod
     def is_valid_adjacency(adjacencies):
-        """ Obtain an arrangement from a set of adjacencies. Cache speeds up operation as set is fully hashable. """
+        """ Obtain an arrangement from a set of adjacencies. """
         for arrangement in CubeArrangement:
             if arrangement.name != 'PieceArrangement' and adjacencies == arrangement.adjacencies:
                 return arrangement
@@ -258,54 +259,64 @@ class CubeFace(Enum):
         self._corners = value
 
 
-class CubeObj:
-    """ Defines a cube object and provides methods to access and manipulate the cube. """
+class Cube:
+    """ Provides methods for identifying, querying, and manipulating a 3x3 Rubik's Cube and checking its validity. """
     def __init__(self, input_cube: str):
-        """
-        Receives an input_cube string and converts it to a cube object to be manipulated
+        # Check validity of input
+        if input_cube is None:
+            raise CubeMissing()
 
-        _cube_string: an alias of input_cube
-        _cube_map: a 1-to-1 face map of the input string
-        _faces: identifies all the faces of this cube by index or name
-        _pieces: the individual pieces that make up the cube and their properties
-        _pinned_centerpieces: to simplify solve, we assume that the central locations of the cube are the permanent faces and can be pinned
-        _color_map: a dictionary of each color and the number of items for each
-        """
+        # Test to see if value is a string
+        if not isinstance(input_cube, str):
+            raise InvalidCubeType(input_cube)
+
+        # Test for the value length
+        if not len(input_cube) == 54:
+            raise InvalidCubeLength(input_cube)
+
+        # Check for illegal characters. Match 54 characters containing a-z, A-Z, and 0-9 only using Regex. No match returns None.
+        if not re.match(r'[a-zA-Z0-9]{54}', input_cube):
+            raise InvalidCubeCharacters(input_cube)
+
+        # Cube parameters
         self._cube_string = input_cube
-        self._cube_map = None
-        self._faces = CubeFace
-        self._pieces: List[CubePiece] = []
-        self._pinned_centerpieces = {}
-        self._map_pieces()
-
-        # Convenience object
-        self.color_map = {}
+        self._cube_map: str                 # a 1-to-1 face map of the input string
+        self._faces = CubeFace              # identifies all the faces of this cube by index or name
+        self._pieces: List[CubePiece] = []  # the individual pieces that make up the cube and their properties
+        self._pinned_centerpieces = {}      # to simplify solve, we assume that the central locations of the cube are the permanent faces and can be pinned
+        self._remap_pieces()                # convert input string to a same-size string containing the face index for each value
 
         # Create cube object from data received
         self._unpack()
 
     def _unpack(self):
         # Create a cube object from input to continue validating
-        for x, value in enumerate(self._cube_string):
-            # Add the cube piece to our object
+        color_map = {}
+        for x, (piece_value, mapped_value) in enumerate(zip(self._cube_string, self._cube_map)):
+            # Obtain current cube arrangement of the piece provided
             arrangement = CubeArrangement.get_arrangement_from_element(x)
-            adjacent_faces = set()
-            for face in arrangement.true_indexes:
-                adjacent_faces.add(self.face_map[face])
-            self.color_map[value] = self.color_map.get(value, 0) + 1
 
-            # Construct a piece object to add to the cube
+            # Create a cube piece with the relevant parameters
             piece = CubePiece(
                 x,
-                value,
+                piece_value,
                 rm_index=(x + 1) % 9,
-                face=self.get_face_index(value),
+                face=mapped_value,
                 arrangement=arrangement,
-                adjacent_faces=adjacent_faces
+                adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes}
             )
-            self.add_piece(piece)
+            self._add_piece(piece)
 
-    def _map_pieces(self):
+            # Add the piece value and index to the color map
+            color_map[piece_value] = color_map.get(piece_value, 0) + 1
+
+        # Test for invalid cube conditions post unpack
+        for piece, count in color_map.items():
+            if count != 9:
+                raise InvalidCubeComposition(piece, self)
+
+    def _remap_pieces(self):
+        # Retrieve pinned centerpieces by location
         for x, i in enumerate(range(4, 53, 9)):
             self._pinned_centerpieces[self._cube_string[i]] = x
 
@@ -314,22 +325,7 @@ class CubeObj:
             raise InvalidCubeCenter(self)
         self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
 
-    def get_face_index(self, value):
-        return self._pinned_centerpieces[value]
-
-    @property
-    def face_map(self):
-        return self._cube_map
-
-    @property
-    def faces(self):
-        return self._faces
-
-    @property
-    def pieces(self):
-        return self._pieces
-
-    def add_piece(self, piece: CubePiece):
+    def _add_piece(self, piece: CubePiece):
         # Check boundary conditions before adding piece
         if CubeArrangement.is_valid_adjacency(piece.adjacent_faces) is None:
             if piece.arrangement.piece_type == PieceType.CORNER.value:
@@ -338,7 +334,7 @@ class CubeObj:
                 raise InvalidCubeEdge(self)
 
             # This error should NOT happen, but if any test matches this output we can retrace
-            raise InvalidCubeComposition('x', 'center', self)
+            raise InvalidCubeComposition('center', self)
 
         # Boundary checks successful, add piece
         self._pieces.append(piece)
@@ -359,43 +355,3 @@ class CubeObj:
 
     def __repr__(self):
         return f'{self._cube_string}\n{self._cube_map}'
-
-
-class Cube:
-    """ Rubik's cube object
-
-        Provides methods for identifying, querying, and manipulating a cube and checking its validity
-
-        Definitions:
-            Face - The 9 contiguous or non-contiguous set of pieces on a cube
-            Color - The value of a given face (centerpiece)
-            Index - Zero-based index of the cube
-            v_index - value of the piece for visual purposes
-    """
-    def __init__(self, values):
-        # Check validity of input
-        if values is None:
-            raise CubeMissing()
-
-        # Test to see if value is a string
-        if not isinstance(values, str):
-            raise InvalidCubeType(values)
-
-        # Test for the value length
-        if not len(values) == 54:
-            raise InvalidCubeLength(values)
-
-        # Check for illegal characters. Match 54 characters containing a-z, A-Z, and 0-9 only using Regex. No match returns None.
-        if not re.match(r'[a-zA-Z0-9]{54}', values):
-            raise InvalidCubeCharacters(values)
-
-        # Define a cube using the input value
-        self._cube = CubeObj(values)
-
-        # Test for invalid cube conditions
-        for piece, count in self._cube.color_map.items():
-            if count != 9:
-                raise InvalidCubeComposition(piece, 'face', self._cube)
-
-    def __str__(self):
-        return self._cube
