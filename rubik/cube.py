@@ -270,8 +270,12 @@ class Cube:
         if not isinstance(input_cube, str):
             raise InvalidCubeType(input_cube)
 
-        # Test for the value length
-        if not len(input_cube) == 54:
+        # Variations on conversion to raw string implies invalid characters
+        if len(repr(input_cube)) - 2 != len(input_cube):
+            raise InvalidCubeCharacters(input_cube)
+
+        # Test for the actual value length
+        if len(input_cube) != 54:
             raise InvalidCubeLength(input_cube)
 
         # Check for illegal characters. Match 54 characters containing a-z, A-Z, and 0-9 only using Regex. No match returns None.

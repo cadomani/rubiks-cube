@@ -22,10 +22,10 @@ def _check(parms):
     # Instead of returning a dictionary with keys, we early return in every function to short-circuit and avoid extra work
     try:
         cube_str = parms['cube']
-        cube = rubik.Cube(cube_str)
+        _ = rubik.Cube(cube_str)
     except CubeError as e:
         return {'status': str(e)}
-    except KeyError as e:
+    except KeyError:
         return {'status': 'error: the cube parameter is missing'}
     else:
         # If no errors occurred, return ok.

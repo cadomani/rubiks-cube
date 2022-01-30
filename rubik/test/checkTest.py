@@ -75,6 +75,26 @@ class CheckTest(TestCase):
         status = result.get('status', None)
         self.assertEqual('ok', status)
 
+    def test_check_071_ShouldReturnOkOnScrambledCube(self):
+        parm = {
+            'op': 'check',
+            'cube': '544204041130114012452220402110535323513045102534352533'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('ok', status)
+
+    def test_check_072_ShouldReturnOkOnScrambledCube(self):
+        parm = {
+            'op': 'check',
+            'cube': 'OBRRBBBGWGBRWWRRGOYGWYGWGYBRGWOYBOROBOBYRYGOYWWGWORYOY'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('ok', status)
+
     def test_check_910_ShouldReturnErrorOnMissingCube(self):
         parm = {
             'op': 'check'
@@ -124,15 +144,37 @@ class CheckTest(TestCase):
         status = result.get('status', None)
         self.assertEqual('error: invalid cube declaration - the cube is not 54 characters in length', status)
 
-    def test_check_930_ShouldReturnErrorIfFaceColorDoesNotOccurNineTimes(self):
+    def test_check_930_ShouldReturnErrorOnInvalidCharacters(self):
         parm = {
             'op': 'check',
-            'cube': 'bbbbbbbbbrrrrrrrrrggggggggooooooooooyyyyyyyyywwwwwwwww'
+            'cube': '%%%%%%%%%777777777.........RRRRRRRRR[[[[[[[[[MMMMMMMMM'
         }
         result = check._check(parm)
         self.assertIn('status', result)
         status = result.get('status', None)
-        self.assertTrue("face value does not occur 9 times" in status)
+        self.assertEqual('error: invalid cube declaration - the cube contains invalid characters', status)
+
+    def test_check_931_ShouldReturnErrorOnInvalidCharacters(self):
+        # Pass in what should be a raw string without prepending 'r' to make sure that backslashes don't get skipped or misinterpreted on regex
+        parm = {
+            'op': 'check',
+            'cube': r'\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\..'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube declaration - the cube contains invalid characters', status)
+
+    def test_check_932_ShouldReturnErrorOnInvalidCharacters(self):
+        # As above, except since it is not written as a raw string, a normal check would identify it as 54 characters instead of 59. Regardless, it is invalid.
+        parm = {
+            'op': 'check',
+            'cube': r'\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\.\\.\.\.\..\..\.'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube declaration - the cube contains invalid characters', status)
 
     def test_check_940_ShouldReturnErrorOnInvalidArrangementOfCenterPieces(self):
         parm = {
@@ -164,72 +206,52 @@ class CheckTest(TestCase):
         status = result.get('status', None)
         self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
 
-    # def test_check_960_ShouldReturnErrorOnCornerPieceParityError(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': 'wwwwwwbwoggggggwggyyyyyyyyybbbbbbbborrrrrrrrrwogoooooo'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-
-    # def test_check_961_ShouldReturnErrorOnCornerPieceParityError(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': '366666266625222222655555555444444444332333333111111111'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-
-    # def test_check_970_ShouldReturnErrorOnEdgePieceParityError(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': '366666266625222222655555555444444444332333333111111111'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-
-    # def test_check_971_ShouldReturnErrorOnEdgePieceParityError(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': '366666266625222222655555555444444444332333333111111111'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-
-    # def test_check_980_ShouldReturnErrorOnParityMismatch(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': '366666266625222222655555555444444444332333333111111111'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-    #
-    # def test_check_981_ShouldReturnErrorOnParityMismatch(self):
-    #     parm = {
-    #         'op': 'check',
-    #         'cube': '366666266625222222655555555444444444332333333111111111'
-    #     }
-    #     result = check._check(parm)
-    #     self.assertIn('status', result)
-    #     status = result.get('status', None)
-    #     self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
-
-    def test_check_990_ShouldReturnErrorOnInvalidCharacters(self):
+    def test_check_952_ShouldReturnErrorOnInvalidArrangementOfCornerPieces(self):
         parm = {
             'op': 'check',
-            'cube': '%%%%%%%%%777777777.........RRRRRRRRR[[[[[[[[[MMMMMMMMM'
+            'cube': 'rooywowoybgwbbowbyoryyywowybbwrgrgygrbgworywyrgogryrgg'
         }
         result = check._check(parm)
         self.assertIn('status', result)
         status = result.get('status', None)
-        self.assertEqual('error: invalid cube declaration - the cube contains invalid characters', status)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of corner pieces', status)
+
+    def test_check_960_ShouldReturnErrorOnInvalidArrangementOfEdgePieces(self):
+        parm = {
+            'op': 'check',
+            'cube': 'rooywowobbgwrbowbyoryyywowybbwrgrgygrbgwobbwyrgogryrgg'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of edge pieces', status)
+
+    def test_check_961_ShouldReturnErrorOnInvalidArrangementOfEdgePieces(self):
+        parm = {
+            'op': 'check',
+            'cube': 'rooROoOobbBOrboObRorRRROoORbbOrBrBRBrbBOobbORrBoBrRrBB'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of edge pieces', status)
+
+    def test_check_962_ShouldReturnErrorOnInvalidArrangementOfEdgePieces(self):
+        parm = {
+            'op': 'check',
+            'cube': '544204041130514012452220402110535323513041102534352533'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertEqual('error: invalid cube configuration - the cube does not contain a valid arrangement of edge pieces', status)
+
+    def test_check_990_ShouldReturnErrorIfFaceColorDoesNotOccurNineTimes(self):
+        parm = {
+            'op': 'check',
+            'cube': 'bbbbbbbbbrrrrrrrrrggggggggooooooooooyyyyyyyyywwwwwwwww'
+        }
+        result = check._check(parm)
+        self.assertIn('status', result)
+        status = result.get('status', None)
+        self.assertTrue("face value does not occur 9 times" in status)
