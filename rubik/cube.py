@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import re
 from enum import Enum, unique
 from typing import List, Set
-from functools import cache
 
 
 # CUBE ERRORS
@@ -146,7 +145,6 @@ class CubeArrangement(Enum):
         return self.value.indexes
 
     @staticmethod
-    @cache
     def get_arrangement_from_element(index):
         """ Locate a piece if we know any one of the elements. Index parameter is zero based. """
         for arrangement in CubeArrangement:
