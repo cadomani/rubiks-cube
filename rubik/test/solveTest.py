@@ -13,6 +13,24 @@ class SolveTest(TestCase):
         the expected results not being matched.            
     
     """   
+    def test_solve_910_ShouldReturnOkOnValidRotation(self):
+        parm = {
+            'op': 'solve',
+            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'rotate': 'F'
+        }
+        expected = {
+            'status': 'ok'
+        }
+        
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+        
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+    
+    
     # @unittest.skip()
     # def test_solve_050_ShouldReturnOkOnValidRotation(self):
     #     parm = {
@@ -33,7 +51,7 @@ class SolveTest(TestCase):
         
         
         
-    def test_solve_010_ShouldReturnErrorOnInvalidRotation(self):
+    def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
             'op': 'solve',
             'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
