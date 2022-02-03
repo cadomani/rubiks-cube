@@ -1,25 +1,24 @@
 import os
 from flask import Flask, request
 import rubik.dispatch as dispatch
+from rubik.dispatch import _dispatch
 
 app = Flask(__name__)
 
 
-# -----------------------------------
-#  The following code is invoked when the path portion of the URL matches 
-#         /rubik
-#
-#  Parameters are passed as a URL query:
-#        /rubik?parm1=value1&parm2=value2
-#
 @app.route('/rubik')
 def server():
+    """
+    The following code is invoked when the path portion of the URL matches
+        /rubik
+
+    Parameters are passed as a URL query:
+        /rubik?parm1=value1&parm2=value2
+    """
     try:
-        userParms = {}
-        for key in request.args:
-            userParms[key] = str(request.args.get(key, ''))
-        result = dispatch._dispatch(userParms)
-        print("Response -->", str(result))
+        # Path query values are url decoded and stored as strings, casting as a dict we get the same result as the loop
+        result = _dispatch(dict(request.args.items()))
+        print(f"Response --> {result}")
         return str(result)
     except Exception as e:
         return str(e)

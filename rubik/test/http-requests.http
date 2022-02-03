@@ -1,0 +1,6 @@
+### Check OK status on valid cube
+GET http://localhost:9999/rubik?op=check&cube=rooywowobbgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg
+
+
+### Check error status on valid cube
+GET http://localhost:9999/rubik?op=check&cube=rooywowoybgwbbowbyoryyywowybbwrgrgygrbgworywyrgogryrgg
