@@ -37,7 +37,7 @@ class SolveTest(TestCase):
         parm = {
             'op': 'solve',
             'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
-            'rotate': 'F'
+            'rotate': 'm'
         }
         expected = {
             'status': 'error: invalid rotation command provided'
