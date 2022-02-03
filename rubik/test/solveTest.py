@@ -9,7 +9,15 @@ class SolveTest(TestCase):
             'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
             'rotate': 'F'
         }
+        expected = {
+            'status': 'ok',
+            'cube': 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
+        }
         result = solve._solve(parm)
-        self.assertIn('status', result)
         status = result.get('status', None)
         self.assertEqual('ok', status)
+        
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+        
