@@ -22,7 +22,7 @@ class CubeRotations(Enum):
     
     
 def _solve(parms):
-    if parms['rotate'] not in CubeRotations:
+    if parms['rotate'] not in list(CubeRotations):
         return({
             "status": "error: invalid rotation command provided"
         })
