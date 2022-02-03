@@ -2,27 +2,25 @@ import rubik.cube as rubik
 from enum import Enum
 
 
-class CubeRotations(Enum):
-    """ Writing cube rotations as an enum allows us to get direction easily by an even-odd check
-        as well as assigning a procedure to an integer value rather than a string, where we can 
-        unintentionally fail to compare upper vs lowercase.
-    """
-    F = 0
-    f = 1
-    R = 2
-    r = 3
-    B = 4
-    b = 5
-    L = 6
-    l = 7
-    U = 8
-    u = 9
-    D = 10
-    d = 11
+CUBE_ROTATIONS = [
+    "F",
+    "f",
+    "R",
+    "r",
+    "B",
+    "b",
+    "L",
+    "l",
+    "U",
+    "u",
+    "D",
+    "d"
+]
     
     
 def _solve(parms):
-    if parms['rotate'] not in list(CubeRotations):
+    if parms['rotate'] not in CUBE_ROTATIONS:
         return({
             "status": "error: invalid rotation command provided"
         })
+    return {"status": "ok"}
