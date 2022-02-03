@@ -15,7 +15,7 @@ class SolveTest(TestCase):
         }
         result = solve._solve(parm)
         status = result.get('status', None)
-        self.assertEqual('ok', status)
+        self.assertEqual(expected['status'], status)
         
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
