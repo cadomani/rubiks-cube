@@ -62,8 +62,12 @@ def _solve(parms):
     try:
         # Ensure parameters are not empty
         if cube is None and rotate_command is None:
-            raise MissingRotateCommand(rotate_command)
-
+            raise MissingParameters()
+        elif cube is None:
+            raise MissingCube(rotate_command)
+        elif rotate_command is None:
+            raise MissingRotateCommand(cube)
+        
         # Match valid characters
         matches = re.findall(VALID_ROTATIONS_REGEX, rotate_command)
         if len(matches) != len(rotate_command):
