@@ -84,7 +84,6 @@ class SolveTest(TestCase):
     def test_solve_920_ShouldReturnErrorOnMissingCube(self):
         parm = {
             'op'    : 'solve',
-            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
             'rotate': 'F'
         }
         expected = {
