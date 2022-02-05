@@ -14,6 +14,7 @@ class SolveTest(TestCase):
     
     """
 
+    @unittest.skip()
     def test_solve_010_ShouldReturnOkOnValidRotation(self):
         parm = {
             'op'    : 'solve',
@@ -28,23 +29,22 @@ class SolveTest(TestCase):
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-    # @unittest.skip()
-    # def test_solve_050_ShouldReturnOkOnValidRotation(self):
-    #     parm = {
-    #         'op': 'solve',
-    #         'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
-    #         'rotate': 'F'
-    #     }
-    #     expected = {
-    #         'status': 'ok',
-    #         'cube': 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
-    #     }
-    #     result = solve._solve(parm)
-    #     status = result.get('status', None)
-    #     self.assertEqual(expected['status'], status)
-    #
-    #     cube = result.get('cube', None)
-    #     self.assertEqual(expected['cube'], cube)
+    def test_solve_050_ShouldReturnOkOnValidRotation(self):
+        parm = {
+            'op': 'solve',
+            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'rotate': 'F'
+        }
+        expected = {
+            'status': 'ok',
+            'cube': 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+    
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
 
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
