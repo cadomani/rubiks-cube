@@ -65,11 +65,6 @@ def _solve(parms):
 
     # Match valid characters
     matches = re.findall(VALID_ROTATIONS_REGEX, rotate_command)
-
     if len(matches) != len(rotate_command):
-        raise InvalidRotateCommand
-    if parms['rotate'] not in CUBE_ROTATIONS:
-        return({
-            "status": "error: invalid rotation command provided"
-        })
+        raise InvalidRotateCommand(cube, rotate_command)
     return {"status": "ok"}
