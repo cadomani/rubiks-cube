@@ -62,3 +62,22 @@ class SolveTest(TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
+        
+    
+    def test_solve_910_ShouldReturnErrorOnMissingCube(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'rotate': 'F'
+        }
+        expected = {
+            'status': 'error: the cube parameter is missing'
+        }
+
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+
