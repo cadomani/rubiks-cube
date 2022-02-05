@@ -59,12 +59,15 @@ def _solve(parms):
     cube = parms.get('cube')
     rotate_command = parms.get('rotate')
 
-    # Ensure parameters are not empty
-    if cube is None and rotate_command is None:
-        raise MissingRotateCommand(rotate_command)
+    try:
+        # Ensure parameters are not empty
+        if cube is None and rotate_command is None:
+            raise MissingRotateCommand(rotate_command)
 
-    # Match valid characters
-    matches = re.findall(VALID_ROTATIONS_REGEX, rotate_command)
-    if len(matches) != len(rotate_command):
-        raise InvalidRotateCommand(cube, rotate_command)
+        # Match valid characters
+        matches = re.findall(VALID_ROTATIONS_REGEX, rotate_command)
+        if len(matches) != len(rotate_command):
+            raise InvalidRotateCommand(cube, rotate_command)
+    except SolveError as e:
+        return {"status": str(e)}
     return {"status": "ok"}
