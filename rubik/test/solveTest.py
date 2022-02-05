@@ -78,8 +78,6 @@ class SolveTest(TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-        
-    
     
     def test_solve_920_ShouldReturnErrorOnMissingCube(self):
         parm = {

@@ -1,5 +1,4 @@
 import rubik.cube as rubik
-from enum import Enum
 import re
 
 
@@ -36,22 +35,7 @@ class MissingParameters(SolveError):
         super().__init__("error: both a cube and a rotation parameter must be provided", None, None)
 
 
-CUBE_ROTATIONS = [
-    "F",
-    "f",
-    "R",
-    "r",
-    "B",
-    "b",
-    "L",
-    "l",
-    "U",
-    "u",
-    "D",
-    "d"
-]
-
-VALID_ROTATIONS_REGEX = r"[FfRrBbLlUuDd]"
+VALID_ROTATIONS_REGEX = r"[frblud]"
     
     
 def _solve(parms):
@@ -69,8 +53,8 @@ def _solve(parms):
             raise MissingRotateCommand(cube)
         
         # Match valid characters
-        matches = re.findall(VALID_ROTATIONS_REGEX, rotate_command)
-        if len(matches) != len(rotate_command):
+        rotations = re.findall(VALID_ROTATIONS_REGEX, rotate_command, re.IGNORECASE)
+        if len(rotations) != len(rotate_command):
             raise InvalidRotateCommand(cube, rotate_command)
     except SolveError as e:
         return {"status": str(e)}
