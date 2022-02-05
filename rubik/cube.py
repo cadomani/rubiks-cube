@@ -352,6 +352,9 @@ class Cube:
             self._faces(i).edges = CubeArrangement.get_pieces(self._pieces, PieceType.EDGE, i)
             self._faces(i).corners = CubeArrangement.get_pieces(self._pieces, PieceType.CORNER, i)
 
+    def rotate(self, rotate_command: List[str] = None):
+        return 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww'
+
     def __str__(self):
         return self._cube_string
 

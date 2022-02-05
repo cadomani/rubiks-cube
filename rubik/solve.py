@@ -56,6 +56,12 @@ def _solve(parms):
         rotations = re.findall(VALID_ROTATIONS_REGEX, rotate_command, re.IGNORECASE)
         if len(rotations) != len(rotate_command):
             raise InvalidRotateCommand(cube, rotate_command)
+
+        # Pass cube and rotations array to cube class for processing
+        cube = rubik.Cube(input_cube=cube)
+
+        # Rotate cube by command
+        rotated_cube = cube.rotate(rotate_command)
     except SolveError as e:
         return {"status": str(e)}
-    return {"status": "ok"}
+    return {"status": "ok", "cube": rotated_cube}
