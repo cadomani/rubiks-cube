@@ -2,7 +2,7 @@
 
 class HyperCubeBranch:
     def __init__(self):
-
+        pass
 
 
 class HyperCube:
@@ -10,7 +10,7 @@ class HyperCube:
         pass
 
     def search(self):
-
+        pass
 
 if __name__ == "__main__":
     hypercube = HyperCube()

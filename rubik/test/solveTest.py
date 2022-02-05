@@ -12,25 +12,22 @@ class SolveTest(TestCase):
         don't encounter issues where the happy path tests fail due to lack of validation instead of failing due to
         the expected results not being matched.            
     
-    """   
-    def test_solve_910_ShouldReturnOkOnValidRotation(self):
+    """
+
+    def test_solve_010_ShouldReturnOkOnValidRotation(self):
         parm = {
-            'op': 'solve',
-            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'op'    : 'solve',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
             'rotate': 'F'
         }
         expected = {
             'status': 'ok'
         }
-        
+
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
-        
-        # Verify that we have not sent a cube parameter on a failure case
-        self.assertNotIn('cube', result)
-    
-    
+
     # @unittest.skip()
     # def test_solve_050_ShouldReturnOkOnValidRotation(self):
     #     parm = {
@@ -48,22 +45,20 @@ class SolveTest(TestCase):
     #
     #     cube = result.get('cube', None)
     #     self.assertEqual(expected['cube'], cube)
-        
-        
-        
+
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
-            'op': 'solve',
-            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'op'    : 'solve',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
             'rotate': 'm'
         }
         expected = {
-            'status': 'error: invalid rotation command provided'
+            'status': 'error: the rotate command is invalid'
         }
-        
+
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
-        
+
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
