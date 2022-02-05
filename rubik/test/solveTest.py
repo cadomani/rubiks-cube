@@ -101,8 +101,6 @@ class SolveTest(TestCase):
     def test_solve_930_ShouldReturnErrorOnMissingParameters(self):
         parm = {
             'op'    : 'solve',
-            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
-            'rotate': 'F'
         }
         expected = {
             'status': 'error: both a cube and a rotation parameter must be provided'
