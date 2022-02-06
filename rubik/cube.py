@@ -455,6 +455,28 @@ class Cube:
                 direction = "ACW"
             print(f"{self._faces[command].name} turn {direction}")
             self._faces[command].rotate(direction)
+
+            # Obtain skirt for this face rotation
+            skirt = self._faces[command].skirt
+
+            # Rotate skirt values
+            temp_l0 = self._pieces[skirt[0][0]]
+            temp_l1 = self._pieces[skirt[0][1]]
+            temp_l2 = self._pieces[skirt[0][2]]
+            # for x, group in enumerate(skirt):
+            #     for piece in group:
+            self._pieces[skirt[0][0] - 1] = skirt[3][0]
+            self._pieces[skirt[0][1] - 1] = skirt[3][1]
+            self._pieces[skirt[0][2] - 1] = skirt[3][2]
+            self._pieces[skirt[3][0] - 1] = skirt[2][0]
+            self._pieces[skirt[3][1] - 1] = skirt[2][1]
+            self._pieces[skirt[3][2] - 1] = skirt[2][2]
+            self._pieces[skirt[2][0] - 1] = skirt[1][0]
+            self._pieces[skirt[2][1] - 1] = skirt[1][1]
+            self._pieces[skirt[2][2] - 1] = skirt[1][2]
+            self._pieces[skirt[1][0] - 1] = temp_l0
+            self._pieces[skirt[1][1] - 1] = temp_l1
+            self._pieces[skirt[1][2] - 1] = temp_l2
         self._reconstruct()
 
     def _reconstruct(self):
