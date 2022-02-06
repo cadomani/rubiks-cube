@@ -277,7 +277,7 @@ class SolveTest(unittest.TestCase):
         parm = {
             'op'    : 'solve',
             'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
-            'rotate': 'FLFFBTTuLfUrFLuRRuLLuRRt'
+            'rotate': 'FLFFBUUuLfUrFLuRRuLLuRRu'
         }
         expected = {
             'status': 'ok',
