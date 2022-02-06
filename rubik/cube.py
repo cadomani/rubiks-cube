@@ -76,6 +76,24 @@ class PieceType(Enum):
 
 
 @unique
+class CubeTranslation(Enum):
+    """ Tracks faces and their translations as a cycle. """
+    R = [0, 4, 2, 5, 0]
+    L = [0, 5, 2, 4, 0]
+    U = [0, 3, 2, 1, 0]
+    D = [0, 1, 2, 3, 0]
+    F = [1, 5, 3, 4, 1]
+    B = [1, 4, 3, 5, 1]
+    R_AFF = [3, 6, 9]
+    L_AFF = [1, 4, 7]
+    U_AFF = [1, 2, 3]
+    D_AFF = [7, 8, 9]
+    F_AFF = []
+    FACE_CW = [(1, 2, 3), (3, 6, 9), (9, 8, 7), (7, 4, 1), (1, 2, 3)]
+    FACE_ACW = [(1, 2, 3), (7, 4, 1), (9, 8, 7), (3, 6, 9), (1, 2, 3)]
+
+
+@unique
 class CubeArrangement(Enum):
     """
     Models relationsips for the cube
@@ -172,6 +190,14 @@ class CubeArrangement(Enum):
 
 
 @dataclass
+class CubePieceTranslation:
+    translate_left: int
+    translate_right: int
+    translate_up: int
+    translate_down: int
+
+
+@dataclass
 class CubePiece:
     """
     Models a single cube piece and all the relevant properties
@@ -199,12 +225,12 @@ class CubeFace(Enum):
     and provides helper methods to access its edges, corners, the center, and its color (identity)
     TODO: This should be a class ideally, not an enum (functionally there is no difference, but we are manipulating instance states)
     """
-    FRONT = 0
-    RIGHT = 1
-    BACK = 2
-    LEFT = 3
-    UP = 4
-    DOWN = 5
+    F = 0
+    R = 1
+    B = 2
+    L = 3
+    U = 4
+    D = 5
 
     def __init__(self, _):
         self._edges = []
@@ -215,12 +241,12 @@ class CubeFace(Enum):
     @property
     def opposite(self):
         return {
-            CubeFace.FRONT: CubeFace.BACK,
-            CubeFace.RIGHT: CubeFace.LEFT,
-            CubeFace.BACK: CubeFace.FRONT,
-            CubeFace.LEFT: CubeFace.RIGHT,
-            CubeFace.UP: CubeFace.DOWN,
-            CubeFace.DOWN: CubeFace.UP
+            CubeFace.F: CubeFace.B,
+            CubeFace.R: CubeFace.L,
+            CubeFace.B: CubeFace.F,
+            CubeFace.L: CubeFace.R,
+            CubeFace.U: CubeFace.D,
+            CubeFace.D: CubeFace.U
         }[self]
 
     @property
@@ -256,6 +282,48 @@ class CubeFace(Enum):
     def corners(self, value: List[CubePiece]):
         self._corners = value
 
+    def rotate(self, direction="CW"):
+        """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
+        affected = [3, 6, 9]
+        face_cycle = CubeTranslation.FACE_CW if direction == "CW" else CubeTranslation.FACE_ACW
+        print(self.corners)
+
+        # Translation map
+        tm = {
+            1: 3,
+            3: 9,
+            9: 7,
+            7: 3
+        }
+
+        new_corners = self.corners.copy()
+        new_edges = self.edges.copy()
+        new_corners[1].face = self.corners[0].face
+        new_corners[3].face = self.corners[1].face
+        new_corners[2].face = self.corners[3].face
+        new_corners[0].face = self.corners[2].face
+        new_edges[2].face = self.edges[0].face
+        new_edges[3].face = self.edges[2].face
+        new_edges[1].face = self.edges[3].face
+        new_edges[0].face = self.edges[1].face
+        self.corners = new_corners
+        self.edges = new_edges
+
+
+        # for x, corner in enumerate(new_corners):
+            # final = (x + 1) % 4
+            # current = corner.rm_index
+            # currentface = corner.face
+            # future = tm[current]
+            # temp_index = new_corners
+            #
+            # if final == 0:
+            #     new_corners[0].index = temp_index
+            #     new_corners[0].face = temp_face
+            # else:
+            #     pass
+
+            # print(f'{x}:{self.corners[x].index} -> {new_index}:{self.corners[new_index].index}')
 
 class Cube:
     """ Provides methods for identifying, querying, and manipulating a 3x3 Rubik's Cube and checking its validity. """
@@ -287,6 +355,7 @@ class Cube:
         self._pieces: List[CubePiece] = []  # the individual pieces that make up the cube and their properties
         self._pinned_centerpieces = {}      # to simplify solve, we assume that the central locations of the cube are the permanent faces and can be pinned
         self._remap_pieces()                # convert input string to a same-size string containing the face index for each value
+        self._state = [self._cube_string]   # the cube state as a stack of values
 
         # Create cube object from data received
         self._unpack()
@@ -353,7 +422,19 @@ class Cube:
             self._faces(i).corners = CubeArrangement.get_pieces(self._pieces, PieceType.CORNER, i)
 
     def rotate(self, rotate_command: List[str] = None):
-        return 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww'
+        for command in rotate_command:
+            direction = "CW"
+            if ord(command) >= 97:
+                direction = "ACW"
+            print(f"{self._faces[command].name} turn {direction}")
+            self._faces[command].rotate(direction)
+        self._reconstruct()
+        return str(self)
+
+    def _reconstruct(self):
+        # for x, face in enumerate(self._faces)
+        for x, face in enumerate(self._pieces):
+            print(face.face)
 
     def __str__(self):
         return self._cube_string
