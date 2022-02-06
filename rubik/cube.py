@@ -290,7 +290,7 @@ class CubeFace(Enum):
         # Rotate face
         temp_corner = self.corners[0].value
         temp_edge = self.edges[0].value
-        corner_cw = [0, 2, 3, 1] if direction == "CW" else [0, 1, 2, 3]
+        corner_cw = [0, 2, 3, 1] if direction == "CW" else [0, 1, 3, 2]
         edge_cw = [0, 1, 3, 2] if direction == "CW" else [0, 2, 3, 1]
         for x, (corner, edge) in enumerate(zip(corner_cw, edge_cw)):
             self.corners[corner].value = temp_corner if x == 3 else self.corners[corner_cw[x + 1]].value
