@@ -297,29 +297,24 @@ class CubeFace(Enum):
     def rotate(self, pieces, direction="CW"):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
         # Rotate face
-        new_corners = self.corners[:]
-        new_edges = self.edges[:]
-        temp = self.corners[2].value
-        new_corners[2].value = str(self.corners[3].value)
-        new_corners[3].value = str(self.corners[1].value)
-        new_corners[1].value = str(self.corners[0].value)
-        new_corners[0].value = temp
-        temp2 = self.edges[1].value
-        new_edges[1].value = self.edges[3].value
-        new_edges[3].value = self.edges[2].value
-        new_edges[2].value = self.edges[0].value
-        new_edges[0].value = temp2
-        self.corners = new_corners
-        self.edges = new_edges
+        temp_corner = self.corners[2].value
+        temp_edge = self.edges[1].value
+        corner_cw = [2, 3, 1, 0]
+        edge_cw = [1, 3, 2, 0]
+        for x, (corner, edge) in enumerate(zip(corner_cw, edge_cw)):
+            if x == 3:
+                self.corners[0].value = temp_corner
+                self.edges[0].value = temp_edge
+            else:
+                self.corners[corner].value = self.corners[corner_cw[x + 1]].value
+                self.edges[edge].value = self.edges[edge_cw[x + 1]].value
 
         # Rotate skirt
         for i in range(0, 3):
             temp = pieces[self.skirt_map[0][i] - 1].value
-            v1 = temp
             for j in range(1, 5):
                 cube_index = self.skirt_map[j % 4][i] - 1
                 temp = pieces[cube_index].shift(temp)
-                print(f"{v1} on {cube_index} ret {temp}")
 
 
 class Cube:
@@ -442,30 +437,23 @@ class Cube:
             self._faces(i).skirt = skirt_values
 
     def rotate(self, rotate_command: List[str] = None):
+        # Iterate through rotation commands, updating state each time
         for command in rotate_command:
+            # Determine direction by upper/lowercase
             direction = "CW"
             if ord(command) >= 97:
                 direction = "ACW"
             print(f"{self._faces[command].name} turn {direction}")
+
+            # Perform in-place rotation within face
             self._faces[command].rotate(self._pieces, direction)
 
-            # Obtain skirt for this face rotation
-            # skirt = self._faces[command].skirt_map
-            # self._swap_skirt_edges(skirt, "CW")
+            # Save states to be able to show stages along with final results
             self._reconstruct()
-        # self._reconstruct()
-
-    # def _swap_skirt_edges(self, skirts, direction):
-    #     for i in range(0, 3):
-    #         temp = self._pieces[skirts[0][i] - 1].value
-    #         v1 = temp
-    #         for j in range(1, 5):
-    #             cube_index = skirts[j % 4][i] - 1
-    #             temp = self._pieces[cube_index].shift(temp)
-    #             print(f"{v1} on {cube_index} ret {temp}")
+            self._state.append(self._cube_string)
 
     def _reconstruct(self):
-        """ Update cube string by appending all cube values in order to a string. """
+        """ Update cube string by appending all cube values in order to a string to save state. """
         self._cube_string = "".join([f.value for f in self._pieces])
 
     def __str__(self):
