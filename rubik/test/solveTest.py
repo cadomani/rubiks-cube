@@ -64,7 +64,6 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
                
-    # @unittest.skip('ignore until we refactor components to simplify rotation')
     def test_solve_040_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
@@ -83,7 +82,6 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)    
         
-    # @unittest.skip('ignore until we refactor components to simplify rotation')
     def test_solve_041_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
@@ -112,6 +110,25 @@ class SolveTest(unittest.TestCase):
         expected = {
             'status': 'ok',
             'cube'  : '044001232322015551443223010431435555211244500301351324',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+
+    def test_solve_060_ShouldReturnKnownScrambledCube(self):
+        """ Test and undo moves to validate robustness. """
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '000000000111111111222222222333333333444444444555555555',
+            'rotate': 'DDRRdfblbLfDDFrBBdlbUUFFlRfUUbLLR'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : '425100353215413244324524020151135105232040011024353543',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
