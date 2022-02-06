@@ -314,10 +314,12 @@ class CubeFace(Enum):
 
         # Rotate skirt
         for i in range(0, 3):
-            temp = self.skirt[0][i]
+            temp = pieces[self.skirt_map[0][i] - 1].value
+            v1 = temp
             for j in range(1, 5):
                 cube_index = self.skirt_map[j % 4][i] - 1
                 temp = pieces[cube_index].shift(temp)
+                print(f"{v1} on {cube_index} ret {temp}")
 
 
 class Cube:
@@ -450,14 +452,17 @@ class Cube:
             # Obtain skirt for this face rotation
             # skirt = self._faces[command].skirt_map
             # self._swap_skirt_edges(skirt, "CW")
-        self._reconstruct()
+            self._reconstruct()
+        # self._reconstruct()
 
     # def _swap_skirt_edges(self, skirts, direction):
     #     for i in range(0, 3):
     #         temp = self._pieces[skirts[0][i] - 1].value
+    #         v1 = temp
     #         for j in range(1, 5):
     #             cube_index = skirts[j % 4][i] - 1
     #             temp = self._pieces[cube_index].shift(temp)
+    #             print(f"{v1} on {cube_index} ret {temp}")
 
     def _reconstruct(self):
         """ Update cube string by appending all cube values in order to a string. """
