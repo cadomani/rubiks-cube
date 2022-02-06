@@ -232,7 +232,6 @@ class CubeFace(Enum):
         self._center = None
         self._color = None
         self._skirt = []
-        self._skirt_map = []
 
     @property
     def opposite(self):
@@ -286,34 +285,22 @@ class CubeFace(Enum):
     def skirt(self, value: List[List[int]]):
         self._skirt = value
 
-    @property
-    def skirt_map(self):
-        return self._skirt_map
-
-    @skirt_map.setter
-    def skirt_map(self, value: List[List[int]]):
-        self._skirt_map = value
-
     def rotate(self, pieces, direction="CW"):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
         # Rotate face
-        temp_corner = self.corners[2].value
-        temp_edge = self.edges[1].value
-        corner_cw = [2, 3, 1, 0]
-        edge_cw = [1, 3, 2, 0]
+        temp_corner = self.corners[0].value
+        temp_edge = self.edges[0].value
+        corner_cw = [0, 2, 3, 1]
+        edge_cw = [0, 1, 3, 2]
         for x, (corner, edge) in enumerate(zip(corner_cw, edge_cw)):
-            if x == 3:
-                self.corners[0].value = temp_corner
-                self.edges[0].value = temp_edge
-            else:
-                self.corners[corner].value = self.corners[corner_cw[x + 1]].value
-                self.edges[edge].value = self.edges[edge_cw[x + 1]].value
+            self.corners[corner].value = temp_corner if x == 3 else self.corners[corner_cw[x + 1]].value
+            self.edges[edge].value = temp_edge if x == 3 else self.edges[edge_cw[x + 1]].value
 
         # Rotate skirt
         for i in range(0, 3):
-            temp = pieces[self.skirt_map[0][i] - 1].value
+            temp = pieces[self.skirt[0][i] - 1].value
             for j in range(1, 5):
-                cube_index = self.skirt_map[j % 4][i] - 1
+                cube_index = self.skirt[j % 4][i] - 1
                 temp = pieces[cube_index].shift(temp)
 
 
@@ -415,10 +402,8 @@ class Cube:
             self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
             skirt_pieces = [*self._faces(i).edges, *self._faces(i).corners]
             skirt_arrangement = []
-            skirt_values = []
             for group in skirt_map:
                 itemset = []
-                valueset = []
                 for x, edge in enumerate(group):
                     index_pop = 1
                     if x == 0:
@@ -430,11 +415,8 @@ class Cube:
                     offset_index = (index_pop + offset) % cutoff
                     mapped_value = values[offset_index]
                     itemset.append(mapped_value)
-                    valueset.append(self._pieces[mapped_value - 1].value)
                 skirt_arrangement.append(itemset)
-                skirt_values.append(valueset)
-            self._faces(i).skirt_map = skirt_arrangement
-            self._faces(i).skirt = skirt_values
+            self._faces(i).skirt = skirt_arrangement
 
     def rotate(self, rotate_command: List[str] = None):
         # Iterate through rotation commands, updating state each time
