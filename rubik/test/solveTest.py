@@ -28,6 +28,57 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
+        
+    
+    def test_solve_011_ShouldReturnFrontRotationOnMissingRotateParameter(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'gggggggggwrrwrrwrrbbbbbbbbbooyooyooywwwwwwooorrryyyyyy',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+    def test_solve_012_ShouldReturnFrontRotationOnMissingRotateParameter(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
+            'rotate': None
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'gggggggggwrrwrrwrrbbbbbbbbbooyooyooywwwwwwooorrryyyyyy',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+            
+    def test_solve_013_ShouldReturnFrontRotationOnMissingRotateParameter(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
+            'rotate': ''
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'gggggggggwrrwrrwrrbbbbbbbbbooyooyooywwwwwwooorrryyyyyy',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
 
     def test_solve_020_ShouldReturnCubeOnSimpleRotation(self):
         parm = {
@@ -38,6 +89,40 @@ class SolveTest(unittest.TestCase):
         expected = {
             'status': 'ok',
             'cube'  : '025404144130014212542220402115533324513045350011352533',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+
+    def test_solve_021_ShouldReturnCubeOnSimpleRotation(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
+            'rotate': 'R'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'ggyggyggyrrrrrrrrrwbbwbbwbbooooooooowwgwwgwwgyybyybyyb',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+    def test_solve_022_ShouldReturnCubeOnSimpleRotation(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
+            'rotate': 'B'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'gggggggggrryrryrrybbbbbbbbbwoowoowoorrrwwwwwwyyyyyyooo',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -180,6 +265,23 @@ class SolveTest(unittest.TestCase):
         expected = {
             'status': 'ok',
             'cube'  : '000000000111111111222222222333333333444444444555555555',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+    def test_solve_071_ShouldReturnKnownSolvedCube(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
+            'rotate': 'FLFFBTTuLfUrFLuRRuLLuRRt'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
