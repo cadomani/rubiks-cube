@@ -219,12 +219,7 @@ class CubeFace(Enum):
     L = 3
     U = 4
     D = 5
-    C0 = "F"
-    C1 = "R"
-    C2 = "B"
-    C3 = "L"
-    C4 = "U"
-    C5 = "D"
+    SKIRT_MAP = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
 
     def __init__(self, _):
         self._edges = []
@@ -396,33 +391,41 @@ class Cube:
 
     def _update(self):
         """ Once the cube object has been filled, calculate faces, corners, and edges. """
-        skirt_map = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
         for i in range(0, 6):
+            # Obtain centerpiece
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, PieceType.CENTER, i)[0]
+
+            # Gather and sort edges
             edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
-            edges.sort(key=lambda v: v.rm_index)
+            self._faces(i).edges = sorted(edges, key=lambda v: v.rm_index)
 
-            self._faces(i).edges = edges
+            # Gather and sort corners
             corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
-            corners.sort(key=lambda v: v.rm_index)
+            self._faces(i).corners = sorted(corners, key=lambda v: v.rm_index)
 
-            self._faces(i).corners = corners
-            skirt_pieces = [*self._faces(i).edges, *self._faces(i).corners]
+            skirt_pieces = [*edges, *corners]
             skirt_arrangement = []
-            for group in skirt_map:
-                itemset = []
+            for group in self._faces.SKIRT_MAP.value:
+                skirt_group = []
                 for x, edge in enumerate(group):
-                    index_pop = 1
-                    if x == 0:
-                        index_pop = 2
+                    # Cubes have clockwise arrangements by design, accessing the second index is only done on the first of each face
+                    index_pop = 2 if x == 0 else 1
+
+                    # Locate a piece that maches the index
                     found_piece = list(filter(lambda v: v.rm_index == edge, skirt_pieces))[0]
+
+                    # Values need to wrap around differently for corners and edges
                     cutoff = 3 if found_piece.arrangement.piece_type == "CORNER" else 2
+
+                    # Obtain skirt value indexes
                     values = found_piece.arrangement.indexes
                     offset = values.index(found_piece.index + 1)
                     offset_index = (index_pop + offset) % cutoff
                     mapped_value = values[offset_index]
-                    itemset.append(mapped_value)
-                skirt_arrangement.append(itemset)
+
+                    # Save skirt index within group
+                    skirt_group.append(mapped_value)
+                skirt_arrangement.append(skirt_group)
             self._faces(i).skirt = skirt_arrangement
 
     def rotate(self, rotate_command: List[str] = None):
