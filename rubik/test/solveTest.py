@@ -13,6 +13,7 @@ class SolveTest(TestCase):
         the expected results not being matched.            
     
     """
+    @unittest.skip('need mixed cube to test distinct faces')
     def test_solve_010_ShouldReturnOkOnValidRotation(self):
         parm = {
             'op': 'solve',
