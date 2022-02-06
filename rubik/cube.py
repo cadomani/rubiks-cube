@@ -460,23 +460,23 @@ class Cube:
             skirt = self._faces[command].skirt
 
             # Rotate skirt values
-            temp_l0 = self._pieces[skirt[0][0]]
-            temp_l1 = self._pieces[skirt[0][1]]
-            temp_l2 = self._pieces[skirt[0][2]]
+            temp_l0 = self._pieces[skirt[0][0]].value
+            temp_l1 = self._pieces[skirt[0][1]].value
+            temp_l2 = self._pieces[skirt[0][2]].value
             # for x, group in enumerate(skirt):
             #     for piece in group:
-            self._pieces[skirt[0][0] - 1] = skirt[3][0]
-            self._pieces[skirt[0][1] - 1] = skirt[3][1]
-            self._pieces[skirt[0][2] - 1] = skirt[3][2]
-            self._pieces[skirt[3][0] - 1] = skirt[2][0]
-            self._pieces[skirt[3][1] - 1] = skirt[2][1]
-            self._pieces[skirt[3][2] - 1] = skirt[2][2]
-            self._pieces[skirt[2][0] - 1] = skirt[1][0]
-            self._pieces[skirt[2][1] - 1] = skirt[1][1]
-            self._pieces[skirt[2][2] - 1] = skirt[1][2]
-            self._pieces[skirt[1][0] - 1] = temp_l0
-            self._pieces[skirt[1][1] - 1] = temp_l1
-            self._pieces[skirt[1][2] - 1] = temp_l2
+            self._pieces[skirt[0][0] - 1].value = self._pieces[skirt[3][0]].value
+            self._pieces[skirt[0][1] - 1].value = self._pieces[skirt[3][1]].value
+            self._pieces[skirt[0][2] - 1].value = self._pieces[skirt[3][2]].value
+            self._pieces[skirt[3][0] - 1].value = self._pieces[skirt[2][0]].value
+            self._pieces[skirt[3][1] - 1].value = self._pieces[skirt[2][1]].value
+            self._pieces[skirt[3][2] - 1].value = self._pieces[skirt[2][2]].value
+            self._pieces[skirt[2][0] - 1].value = self._pieces[skirt[1][0]].value
+            self._pieces[skirt[2][1] - 1].value = self._pieces[skirt[1][1]].value
+            self._pieces[skirt[2][2] - 1].value = self._pieces[skirt[1][2]].value
+            self._pieces[skirt[1][0] - 1].value = temp_l0
+            self._pieces[skirt[1][1] - 1].value = temp_l1
+            self._pieces[skirt[1][2] - 1].value = temp_l2
         self._reconstruct()
 
     def _reconstruct(self):
