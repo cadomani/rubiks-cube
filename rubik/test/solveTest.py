@@ -65,7 +65,7 @@ class SolveTest(TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
                
-    @unittest.skip('ignore until we refactor components to simplify rotation')
+    # @unittest.skip('ignore until we refactor components to simplify rotation')
     def test_solve_040_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
@@ -84,7 +84,7 @@ class SolveTest(TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)    
         
-    @unittest.skip('ignore until we refactor components to simplify rotation')
+    # @unittest.skip('ignore until we refactor components to simplify rotation')
     def test_solve_041_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
