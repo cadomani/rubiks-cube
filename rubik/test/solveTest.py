@@ -32,6 +32,7 @@ class SolveTest(TestCase):
         self.assertEqual(expected['cube'], cube)
 
     def test_solve_020_ShouldReturnOkOnValidRotation(self):
+        # Incomplete test with invalid edge and corner solutions, but face values are correct
         parm = {
             'op'    : 'solve',
             'cube'  : 'rooywowobbgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg',
