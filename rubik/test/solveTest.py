@@ -1,9 +1,8 @@
-from unittest import TestCase
 import rubik.solve as solve
 import unittest
 
 
-class SolveTest(TestCase):
+class SolveTest(unittest.TestCase):
     """
         Tests should be created in the order they should be processed in, to avoid working on tests that
         do a lot of heavy lifting very early on (e.g. tests with full rotations before input validation is done)
