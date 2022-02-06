@@ -41,7 +41,7 @@ class SolveTest(TestCase):
         }
         expected = {
             'status': 'ok',
-            'cube'  : '025404144130014212452220402115533324513045350011352533',
+            'cube'  : '025404144130014212542220402115533324513045350011352533',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
