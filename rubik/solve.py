@@ -35,7 +35,7 @@ def _solve(parms):
 
     try:
         # Ensure parameters are not empty
-        if cube is None:
+        if cube is None or cube == '':
             raise MissingCube(rotate_command)
 
         # Pass valid rotation if it is empty
