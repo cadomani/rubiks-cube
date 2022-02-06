@@ -2,70 +2,13 @@ from dataclasses import dataclass
 import re
 from enum import Enum, unique
 from typing import List, Set
+from rubik.utils.exceptions import *
 
-
-# CUBE ERRORS
-class CubeError(BaseException):
-    def __init__(self, error, problem_cube):
-        self._error = error
-        self._cube = problem_cube
-
-    def __str__(self):
-        return self._error
-
-    def __repr__(self):
-        return f'{self._error} with input \n\t{self._cube}'
-
-
-class CubeMissing(CubeError):
-    def __init__(self):
-        super().__init__('error: the cube parameter is missing', None)
-
-
-class InvalidCubeComposition(CubeError):
-    def __init__(self, piece_face, problem_cube):
-        super().__init__(f'error: the "{piece_face}" face value does not occur 9 times', problem_cube)
-
-
-class InvalidCubeDeclaration(CubeError):
-    def __init__(self, subissue, problem_cube):
-        super().__init__(f'error: invalid cube declaration - {subissue}', problem_cube)
-
-
-class InvalidCubeLength(InvalidCubeDeclaration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube is not 54 characters in length', problem_cube)
-
-
-class InvalidCubeType(InvalidCubeDeclaration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube value is not a string', problem_cube)
-
-
-class InvalidCubeCharacters(InvalidCubeDeclaration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube contains invalid characters', problem_cube)
-
-
-class InvalidCubeConfiguration(CubeError):
-    """ Base Exception for errors occurring due to an unsolvable configuration of cube pieces. """
-    def __init__(self, subissue, problem_cube):
-        super().__init__(f'error: invalid cube configuration - {subissue}', problem_cube)
-
-
-class InvalidCubeCenter(InvalidCubeConfiguration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube does not contain six unique center pieces', problem_cube)
-
-
-class InvalidCubeEdge(InvalidCubeConfiguration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube does not contain a valid arrangement of edge pieces', problem_cube)
-
-
-class InvalidCubeCorner(InvalidCubeConfiguration):
-    def __init__(self, problem_cube):
-        super().__init__(f'the cube does not contain a valid arrangement of corner pieces', problem_cube)
+CUBE_PIECES = 54
+CUBE_FACES = 6
+CUBE_FACE_PIECES = 9
+CUBE_SHARED_EDGES = 12
+CUBE_SHARED_CORNERS = 8
 
 
 class PieceType(Enum):
@@ -161,21 +104,21 @@ class CubeArrangement(Enum):
         return None
 
     @staticmethod
-    def get_pieces(pieces, piece_type: PieceType, index: int = None):
-        """ Return all the valid edges or corners for this face. If no index is given, return all edges"""
+    def get_cohesive_pieces(pieces, color_index, piece_type: PieceType):
+        """ Return all the valid edges or corners for the color index. """
         return list(
             filter(
-                lambda v: (v.face == index if index is not None else True) and v.arrangement.piece_type == piece_type.value,
+                lambda v: (v.face == color_index) and (v.arrangement.piece_type == piece_type.value),
                 pieces
             )
         )
 
     @staticmethod
-    def get_face_pieces(pieces, piece_type: PieceType, face: int = None):
-        """ Return all the valid edges or corners for this face. If no index is given, return all edges"""
+    def get_face_pieces(pieces, face: int, piece_type: PieceType):
+        """ Return all the valid edges or corners for this face. """
         return list(
             filter(
-                lambda v: ((v.index // 9) == face if face is not None else True) and v.arrangement.piece_type == piece_type.value,
+                lambda v: (v.index // 9 == face) and v.arrangement.piece_type == piece_type.value,
                 pieces
             )
         )
@@ -211,7 +154,9 @@ class CubeFace(Enum):
     """
     Maps a cube face to its array number, defines the inverse,
     and provides helper methods to access its edges, corners, the center, and its color (identity)
-    TODO: This should be a class ideally, not an enum (functionally there is no difference, but we are manipulating instance states)
+
+    Functionally, manipulating state is not a common use for enums, but the benefit is that we can easily access and manipulate a single face
+    without instantiation, turning this implementation into more of a singleton, which is perfect for this use case.
     """
     F = 0
     R = 1
@@ -224,9 +169,9 @@ class CubeFace(Enum):
     def __init__(self, _):
         self._edges = []
         self._corners = []
+        self._skirt = []
         self._center = None
         self._color = None
-        self._skirt = []
 
     @property
     def opposite(self):
@@ -248,7 +193,7 @@ class CubeFace(Enum):
         self._color = value
 
     @property
-    def center(self):
+    def center(self) -> CubePiece:
         return self._center
 
     @center.setter
@@ -257,7 +202,7 @@ class CubeFace(Enum):
         self.color = value.value
 
     @property
-    def edges(self):
+    def edges(self) -> List[CubePiece]:
         return self._edges
 
     @edges.setter
@@ -265,7 +210,7 @@ class CubeFace(Enum):
         self._edges = value
 
     @property
-    def corners(self):
+    def corners(self) -> List[CubePiece]:
         return self._corners
 
     @corners.setter
@@ -273,7 +218,7 @@ class CubeFace(Enum):
         self._corners = value
 
     @property
-    def skirt(self):
+    def skirt(self) -> List[List[int]]:
         return self._skirt
 
     @skirt.setter
@@ -304,7 +249,7 @@ class Cube:
     """ Provides methods for identifying, querying, and manipulating a 3x3 Rubik's Cube and checking its validity. """
     def __init__(self, input_cube: str):
         # Check validity of input
-        if input_cube is None:
+        if input_cube is None or input_cube == '':
             raise CubeMissing()
 
         # Test to see if value is a string
@@ -393,14 +338,14 @@ class Cube:
         """ Once the cube object has been filled, calculate faces, corners, and edges. """
         for i in range(0, 6):
             # Obtain centerpiece
-            self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, PieceType.CENTER, i)[0]
+            self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CENTER)[0]
 
             # Gather and sort edges
-            edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
+            edges = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.EDGE)
             self._faces(i).edges = sorted(edges, key=lambda v: v.rm_index)
 
             # Gather and sort corners
-            corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
+            corners = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CORNER)
             self._faces(i).corners = sorted(corners, key=lambda v: v.rm_index)
 
             skirt_pieces = [*edges, *corners]

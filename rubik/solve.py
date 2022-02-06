@@ -1,29 +1,6 @@
 import rubik.cube as rubik
 import re
-
-
-class SolveError(BaseException):
-    def __init__(self, error, problem_cube, rotate_command):
-        self._error = error
-        self._cube = problem_cube
-        self._rotate = rotate_command
-
-    def __str__(self):
-        return self._error
-
-    def __repr__(self):
-        return f'{self._error} with input \n\tcube "{self._cube}" - rotate command "{self._rotate}"'
-
-
-class MissingCube(SolveError):
-    def __init__(self, rotate_command):
-        super().__init__("error: the cube parameter is missing", None, rotate_command)
-
-
-class InvalidRotateCommand(SolveError):
-    def __init__(self, problem_cube, rotate_command):
-        super().__init__("error: the rotate command is invalid", problem_cube, rotate_command)
-
+from rubik.utils.exceptions import SolveError, CubeError, InvalidRotateCommand
 
 VALID_ROTATIONS_REGEX = r"[frblud]"
     
@@ -34,10 +11,6 @@ def _solve(parms):
     rotate_command = parms.get('rotate')
 
     try:
-        # Ensure parameters are not empty
-        if cube is None or cube == '':
-            raise MissingCube(rotate_command)
-
         # Pass valid rotation if it is empty
         if rotate_command is None or rotate_command == '':
             rotate_command = "F"
@@ -52,10 +25,9 @@ def _solve(parms):
 
         # Rotate cube by command
         cube.rotate(rotate_command)
-        rotated_cube = str(cube)
-    except SolveError as e:
+    except (SolveError, CubeError) as e:
         return {"status": str(e)}
     except Exception as e:
         # Catch all other exceptions not handled above
         return {"status": f"error: an exception occurred - {str(e)}"}
-    return {"status": "ok", "cube": rotated_cube}
+    return {"status": "ok", "cube": str(cube)}

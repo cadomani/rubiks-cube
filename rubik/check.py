@@ -19,9 +19,11 @@ def _check(parms):
 
         @return dict: {'status': 'ok'} or {'status': 'error: xxx'}
     """
-    # Instead of returning a dictionary with keys, we early return in every function to short-circuit and avoid extra work
     try:
         _ = rubik.Cube(parms.get('cube'))
     except CubeError as e:
         return {'status': str(e)}
+    except Exception as e:
+        # Catch all other exceptions not handled above
+        return {"status": f"error: an exception occurred - {str(e)}"}
     return {'status': 'ok'}
