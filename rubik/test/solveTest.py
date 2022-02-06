@@ -12,20 +12,21 @@ class SolveTest(unittest.TestCase):
         the expected results not being matched.            
     
     """
+
     def test_solve_010_ShouldReturnOkOnValidFaceRotation(self):
         parm = {
-            'op': 'solve',
-            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'op'    : 'solve',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
             'rotate': 'F'
         }
         expected = {
             'status': 'ok',
-            'cube': 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
+            'cube'  : 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
-    
+
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
@@ -45,7 +46,7 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
-        
+
     def test_solve_030_ShouldReturnOkOnSimpleRotation(self):
         """ Test with clockwise rotations only """
         parm = {
@@ -63,7 +64,7 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
-               
+
     def test_solve_040_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
@@ -80,8 +81,8 @@ class SolveTest(unittest.TestCase):
         self.assertEqual(expected['status'], status)
 
         cube = result.get('cube', None)
-        self.assertEqual(expected['cube'], cube)    
-        
+        self.assertEqual(expected['cube'], cube)
+
     def test_solve_041_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
@@ -117,7 +118,6 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
-        
 
     def test_solve_060_ShouldReturnKnownScrambledCube(self):
         parm = {
@@ -135,7 +135,7 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
-        
+
     def test_solve_070_ShouldReturnKnownSolvedCube(self):
         parm = {
             'op'    : 'solve',
@@ -153,7 +153,6 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
             'op'    : 'solve',
@@ -170,7 +169,7 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-        
+
     def test_solve_911_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
             'op'    : 'solve',
@@ -187,11 +186,11 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-        
+
     def test_solve_920_ShouldReturnErrorOnMissingRotation(self):
         parm = {
-            'op'    : 'solve',
-            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww'
+            'op'  : 'solve',
+            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww'
         }
         expected = {
             'status': 'error: the rotate command is missing'
@@ -203,7 +202,7 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-    
+
     def test_solve_921_ShouldReturnErrorOnMissingCube(self):
         parm = {
             'op'    : 'solve',
@@ -219,10 +218,10 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-        
+
     def test_solve_922_ShouldReturnErrorOnMissingParameters(self):
         parm = {
-            'op'    : 'solve',
+            'op': 'solve',
         }
         expected = {
             'status': 'error: both a cube and a rotation parameter must be provided'
@@ -234,4 +233,3 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-
