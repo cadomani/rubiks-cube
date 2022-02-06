@@ -76,24 +76,6 @@ class PieceType(Enum):
 
 
 @unique
-class CubeTranslation(Enum):
-    """ Tracks faces and their translations as a cycle. """
-    R = [0, 4, 2, 5, 0]
-    L = [0, 5, 2, 4, 0]
-    U = [0, 3, 2, 1, 0]
-    D = [0, 1, 2, 3, 0]
-    F = [1, 5, 3, 4, 1]
-    B = [1, 4, 3, 5, 1]
-    R_AFF = [3, 6, 9]
-    L_AFF = [1, 4, 7]
-    U_AFF = [1, 2, 3]
-    D_AFF = [7, 8, 9]
-    F_AFF = []
-    FACE_CW = [(1, 2, 3), (3, 6, 9), (9, 8, 7), (7, 4, 1), (1, 2, 3)]
-    FACE_ACW = [(1, 2, 3), (7, 4, 1), (9, 8, 7), (3, 6, 9), (1, 2, 3)]
-
-
-@unique
 class CubeArrangement(Enum):
     """
     Models relationsips for the cube
@@ -200,14 +182,6 @@ class CubeArrangement(Enum):
 
 
 @dataclass
-class CubePieceTranslation:
-    translate_left: int
-    translate_right: int
-    translate_up: int
-    translate_down: int
-
-
-@dataclass
 class CubePiece:
     """
     Models a single cube piece and all the relevant properties
@@ -226,8 +200,6 @@ class CubePiece:
     face: int
     arrangement: CubeArrangement
     adjacent_faces: Set[int]
-    final_arrangement: CubeArrangement or None = None
-    current_value: str = ""
 
     def shift(self, new_value):
         temp = self.value
@@ -260,6 +232,7 @@ class CubeFace(Enum):
         self._center = None
         self._color = None
         self._skirt = []
+        self._skirt_map = []
 
     @property
     def opposite(self):
@@ -313,10 +286,16 @@ class CubeFace(Enum):
     def skirt(self, value: List[List[int]]):
         self._skirt = value
 
-    def rotate(self, direction="CW"):
-        """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
-        face_cycle = CubeTranslation.FACE_CW if direction == "CW" else CubeTranslation.FACE_ACW
+    @property
+    def skirt_map(self):
+        return self._skirt_map
 
+    @skirt_map.setter
+    def skirt_map(self, value: List[List[int]]):
+        self._skirt_map = value
+
+    def rotate(self, pieces, direction="CW"):
+        """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
         # Rotate face
         new_corners = self.corners[:]
         new_edges = self.edges[:]
@@ -332,6 +311,13 @@ class CubeFace(Enum):
         new_edges[0].value = temp2
         self.corners = new_corners
         self.edges = new_edges
+
+        # Rotate skirt
+        for i in range(0, 3):
+            temp = self.skirt[0][i]
+            for j in range(1, 5):
+                cube_index = self.skirt_map[j % 4][i] - 1
+                temp = pieces[cube_index].shift(temp)
 
 
 class Cube:
@@ -384,7 +370,6 @@ class Cube:
                 face=mapped_value,
                 arrangement=arrangement,
                 adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes},
-                current_value=mapped_value
             )
             self._add_piece(piece)
 
@@ -433,8 +418,10 @@ class Cube:
             self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
             skirt_pieces = [*self._faces(i).edges, *self._faces(i).corners]
             skirt_arrangement = []
+            skirt_values = []
             for group in skirt_map:
                 itemset = []
+                valueset = []
                 for x, edge in enumerate(group):
                     index_pop = 1
                     if x == 0:
@@ -446,36 +433,31 @@ class Cube:
                     offset_index = (index_pop + offset) % cutoff
                     mapped_value = values[offset_index]
                     itemset.append(mapped_value)
+                    valueset.append(self._pieces[mapped_value - 1].value)
                 skirt_arrangement.append(itemset)
-            print(skirt_arrangement)
-            self._faces(i).skirt = skirt_arrangement
+                skirt_values.append(valueset)
+            self._faces(i).skirt_map = skirt_arrangement
+            self._faces(i).skirt = skirt_values
 
     def rotate(self, rotate_command: List[str] = None):
-        # CW =
         for command in rotate_command:
             direction = "CW"
             if ord(command) >= 97:
                 direction = "ACW"
             print(f"{self._faces[command].name} turn {direction}")
-            self._faces[command].rotate(direction)
+            self._faces[command].rotate(self._pieces, direction)
 
             # Obtain skirt for this face rotation
-            skirt = self._faces[command].skirt
-            self._swap_skirt_edges(skirt, "CW")
+            # skirt = self._faces[command].skirt_map
+            # self._swap_skirt_edges(skirt, "CW")
         self._reconstruct()
 
-    def _swap_skirt_edges(self, skirts, direction):
-        for i in range(0, 3):
-            temp = self._pieces[skirts[0][i] - 1].value
-            for j in range(1, 5):
-                cube_index = skirts[j % 4][i] - 1
-                temp = self._pieces[cube_index].shift(temp)
-
-                # temp = self._pieces[]
-        # for i, group in enumerate(skirts):
-        #     for j, piece in enumerate(group):
-        #         self._pieces[val].shift()
-        # pass
+    # def _swap_skirt_edges(self, skirts, direction):
+    #     for i in range(0, 3):
+    #         temp = self._pieces[skirts[0][i] - 1].value
+    #         for j in range(1, 5):
+    #             cube_index = skirts[j % 4][i] - 1
+    #             temp = self._pieces[cube_index].shift(temp)
 
     def _reconstruct(self):
         """ Update cube string by appending all cube values in order to a string. """
