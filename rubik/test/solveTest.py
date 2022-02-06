@@ -102,6 +102,25 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
+    def test_solve_050_ShouldReturnOriginalCubeOnReturnToHomeAlgorithm(self):
+        """ Test and undo moves to validate robustness. """
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '044001232322015551443223010431435555211244500301351324',
+            'rotate': 'rdRDrdRDrdRDrdRDrdRDrdRD'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : '044001232322015551443223010431435555211244500301351324',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+
+
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
             'op'    : 'solve',

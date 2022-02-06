@@ -442,7 +442,6 @@ class Cube:
 
             # Save states to be able to show stages along with final results
             self._reconstruct()
-            print(self._cube_string)
             self._state.append(self._cube_string)
 
     def _reconstruct(self):
