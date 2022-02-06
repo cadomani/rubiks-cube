@@ -128,24 +128,26 @@ class CubeArrangement(Enum):
 @dataclass
 class CubePiece:
     """
-    Models a single cube piece and all the relevant properties
+    Models a single cube piece and all the relevant properties.
+    The pieces retain their structure and values after instantiation.
+    Translations only change the value of the piece.
 
     index: the cube-index value of this piece, 0-based
-    value: the 'color' of this piece
+    value: the 'color' of this piece (alphanumerical)
     rm_index: the row-major index of this piece
-    face: the primary face index of this piece
+    home_face: the primary face index of this piece
     arrangement: identifies a piece and its arrangement
     adjacent_faces: the neighboring faces of the piece
-    final_arrangement: identifies the mapped arrangement of this piece by its final position
     """
     index: int
     value: str
     rm_index: int
-    face: int
+    home_face: int
     arrangement: CubeArrangement
     adjacent_faces: Set[int]
 
     def shift(self, new_value):
+        """ A small helper that allows shifting of pieces within dataclass while retaining the previous value. """
         temp = self.value
         self.value = new_value
         return temp
@@ -295,7 +297,7 @@ class Cube:
             raise InvalidCubeCharacters(input_cube)
 
         # Test for the actual value length
-        if len(input_cube) != 54:
+        if len(input_cube) != CUBE_PIECES:
             raise InvalidCubeLength(input_cube)
 
         # Check for illegal characters. Match 54 characters containing a-z, A-Z, and 0-9 only using Regex. No match returns None.
@@ -320,13 +322,14 @@ class Cube:
         for x, (piece_value, mapped_value) in enumerate(zip(self._cube_string, self._cube_map)):
             # Obtain current cube arrangement of the piece provided
             arrangement = CubeArrangement.get_arrangement_from_element(x)
+            row_major_index = (x + 1) % CUBE_FACE_PIECES
 
             # Create a cube piece with the relevant parameters
             piece = CubePiece(
                 x,
                 piece_value,
-                rm_index=9 if (x + 1) % 9 == 0 else (x + 1) % 9,
-                face=mapped_value,
+                rm_index=(9 if row_major_index == 0 else row_major_index),
+                home_face=mapped_value,
                 arrangement=arrangement,
                 adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes},
             )
@@ -346,7 +349,7 @@ class Cube:
             self._pinned_centerpieces[self._cube_string[i]] = x
 
         # Test for non-unique centerpieces
-        if self._pinned_centerpieces.__len__() != 6:
+        if self._pinned_centerpieces.__len__() != CUBE_FACES:
             raise InvalidCubeCenter(self)
         self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
 
@@ -365,13 +368,13 @@ class Cube:
         self._pieces.append(piece)
 
         # Trigger update to the faces, corners, and edges once we reach cube length
-        if len(self._pieces) == 54:
+        if len(self._pieces) == CUBE_PIECES:
             self._update()
 
     def _update(self):
         """ Once the cube object has been filled, calculate faces, corners, and edges. """
-        for i in range(0, 6):
-            # Obtain centerpiece
+        for i in range(0, CUBE_FACES):
+            # Obtain centerpiece, edges, and corners
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CENTER)[0]
             self._faces(i).edges = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.EDGE)
             self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CORNER)
@@ -379,11 +382,10 @@ class Cube:
     def rotate(self, rotate_command: List[str] = None):
         # Iterate through rotation commands, updating state each time
         for command in rotate_command:
-            # Determine direction by upper/lowercase
+            # Determine direction by upper/lowercase ascii value
             direction = "CW"
             if ord(command) >= 97:
                 direction = "ACW"
-            # print(f"{self._faces[command.upper()].name} turn {direction}")
 
             # Perform in-place rotation within face
             self._faces[command.upper()].rotate(self._pieces, direction)
@@ -393,8 +395,9 @@ class Cube:
             self._state.append(self._cube_string)
 
     def _reconstruct(self):
-        """ Update cube string by appending all cube values in order to a string to save state. """
+        """ Update cube string by appending all cube values in order to a string to save state, and remap (this is useful in case a center turn is ever added). """
         self._cube_string = "".join([f.value for f in self._pieces])
+        self._remap_pieces()
 
     def __str__(self):
         return self._cube_string
