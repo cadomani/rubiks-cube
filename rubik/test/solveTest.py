@@ -14,7 +14,7 @@ class SolveTest(TestCase):
     
     """
     @unittest.skip('need mixed cube to test distinct faces')
-    def test_solve_010_ShouldReturnOkOnValidRotation(self):
+    def test_solve_010_ShouldReturnOkOnValidFaceRotation(self):
         parm = {
             'op': 'solve',
             'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
@@ -34,12 +34,12 @@ class SolveTest(TestCase):
     def test_solve_020_ShouldReturnOkOnValidRotation(self):
         parm = {
             'op'    : 'solve',
-            'cube'  : '544204041130114012452220402110535323513045102534352533',
+            'cube'  : 'rooywowobbgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg',
             'rotate': 'F'
         }
         expected = {
             'status': 'ok',
-            'cube'  : '025404144130014212452220402115533324513045350011352533',
+            'cube'  : 'wyrowoboobgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg',
         }
         result = solve._solve(parm)
         status = result.get('status', None)

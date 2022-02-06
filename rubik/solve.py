@@ -61,7 +61,8 @@ def _solve(parms):
         cube = rubik.Cube(input_cube=cube)
 
         # Rotate cube by command
-        rotated_cube = cube.rotate(rotate_command)
+        cube.rotate(rotate_command)
+        rotated_cube = str(cube)
     except SolveError as e:
         return {"status": str(e)}
     return {"status": "ok", "cube": rotated_cube}

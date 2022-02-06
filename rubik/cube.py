@@ -188,6 +188,16 @@ class CubeArrangement(Enum):
             )
         )
 
+    @staticmethod
+    def get_face_pieces(pieces, piece_type: PieceType, face: int = None):
+        """ Return all the valid edges or corners for this face. If no index is given, return all edges"""
+        return list(
+            filter(
+                lambda v: ((v.index // 9) == face if face is not None else True) and v.arrangement.piece_type == piece_type.value,
+                pieces
+            )
+        )
+
 
 @dataclass
 class CubePieceTranslation:
@@ -217,6 +227,7 @@ class CubePiece:
     arrangement: CubeArrangement
     adjacent_faces: Set[int]
     final_arrangement: CubeArrangement or None = None
+    current_value: str = ""
 
 
 class CubeFace(Enum):
@@ -231,6 +242,12 @@ class CubeFace(Enum):
     L = 3
     U = 4
     D = 5
+    C0 = "F"
+    C1 = "R"
+    C2 = "B"
+    C3 = "L"
+    C4 = "U"
+    C5 = "D"
 
     def __init__(self, _):
         self._edges = []
@@ -284,46 +301,27 @@ class CubeFace(Enum):
 
     def rotate(self, direction="CW"):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
-        affected = [3, 6, 9]
         face_cycle = CubeTranslation.FACE_CW if direction == "CW" else CubeTranslation.FACE_ACW
-        print(self.corners)
 
-        # Translation map
-        tm = {
-            1: 3,
-            3: 9,
-            9: 7,
-            7: 3
-        }
-
-        new_corners = self.corners.copy()
-        new_edges = self.edges.copy()
-        new_corners[1].face = self.corners[0].face
-        new_corners[3].face = self.corners[1].face
-        new_corners[2].face = self.corners[3].face
-        new_corners[0].face = self.corners[2].face
-        new_edges[2].face = self.edges[0].face
-        new_edges[3].face = self.edges[2].face
-        new_edges[1].face = self.edges[3].face
-        new_edges[0].face = self.edges[1].face
+        # Rotate face
+        new_corners = self.corners[:]
+        new_edges = self.edges[:]
+        temp = self.corners[2].value
+        new_corners[2].value = str(self.corners[3].value)
+        new_corners[3].value = str(self.corners[1].value)
+        new_corners[1].value = str(self.corners[0].value)
+        new_corners[0].value = temp
+        temp2 = self.edges[1].value
+        new_edges[1].value = self.edges[3].value
+        new_edges[3].value = self.edges[2].value
+        new_edges[2].value = self.edges[0].value
+        new_edges[0].value = temp2
         self.corners = new_corners
         self.edges = new_edges
 
+        # Rotate skirt
+        pass
 
-        # for x, corner in enumerate(new_corners):
-            # final = (x + 1) % 4
-            # current = corner.rm_index
-            # currentface = corner.face
-            # future = tm[current]
-            # temp_index = new_corners
-            #
-            # if final == 0:
-            #     new_corners[0].index = temp_index
-            #     new_corners[0].face = temp_face
-            # else:
-            #     pass
-
-            # print(f'{x}:{self.corners[x].index} -> {new_index}:{self.corners[new_index].index}')
 
 class Cube:
     """ Provides methods for identifying, querying, and manipulating a 3x3 Rubik's Cube and checking its validity. """
@@ -374,7 +372,8 @@ class Cube:
                 rm_index=(x + 1) % 9,
                 face=mapped_value,
                 arrangement=arrangement,
-                adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes}
+                adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes},
+                current_value=mapped_value
             )
             self._add_piece(piece)
 
@@ -417,9 +416,9 @@ class Cube:
     def _update(self):
         """ Once the cube object has been filled, calculate faces, corners, and edges. """
         for i in range(0, 6):
-            self._faces(i).center = CubeArrangement.get_pieces(self._pieces, PieceType.CENTER, i)[0]
-            self._faces(i).edges = CubeArrangement.get_pieces(self._pieces, PieceType.EDGE, i)
-            self._faces(i).corners = CubeArrangement.get_pieces(self._pieces, PieceType.CORNER, i)
+            self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, PieceType.CENTER, i)[0]
+            self._faces(i).edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
+            self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
 
     def rotate(self, rotate_command: List[str] = None):
         for command in rotate_command:
@@ -429,12 +428,10 @@ class Cube:
             print(f"{self._faces[command].name} turn {direction}")
             self._faces[command].rotate(direction)
         self._reconstruct()
-        return str(self)
 
     def _reconstruct(self):
-        # for x, face in enumerate(self._faces)
-        for x, face in enumerate(self._pieces):
-            print(face.face)
+        """ Update cube string by appending all cube values in order to a string. """
+        self._cube_string = "".join([f.value for f in self._pieces])
 
     def __str__(self):
         return self._cube_string
