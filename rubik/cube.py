@@ -406,8 +406,14 @@ class Cube:
         skirt_map = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
         for i in range(0, 6):
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, PieceType.CENTER, i)[0]
-            self._faces(i).edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
-            self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
+            edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
+            edges.sort(key=lambda v: v.rm_index)
+
+            self._faces(i).edges = edges
+            corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
+            corners.sort(key=lambda v: v.rm_index)
+
+            self._faces(i).corners = corners
             skirt_pieces = [*self._faces(i).edges, *self._faces(i).corners]
             skirt_arrangement = []
             for group in skirt_map:
