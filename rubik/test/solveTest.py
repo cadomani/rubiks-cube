@@ -13,7 +13,7 @@ class SolveTest(TestCase):
         the expected results not being matched.            
     
     """
-    @unittest.skip('need mixed cube to test distinct faces')
+    # @unittest.skip('need mixed cube to test distinct faces')
     def test_solve_010_ShouldReturnOkOnValidFaceRotation(self):
         parm = {
             'op': 'solve',
@@ -31,6 +31,7 @@ class SolveTest(TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
+    @unittest.skip('face rotation tested, need to test simple skirt rotation')
     def test_solve_020_ShouldReturnOkOnValidRotation(self):
         # Incomplete test with invalid edge and corner solutions, but face values are correct
         parm = {
