@@ -116,12 +116,13 @@ class CubeArrangement(Enum):
     @staticmethod
     def get_face_pieces(pieces, face: int, piece_type: PieceType):
         """ Return all the valid edges or corners for this face. """
-        return list(
+        pieces = list(
             filter(
-                lambda v: (v.index // 9 == face) and v.arrangement.piece_type == piece_type.value,
+                lambda v: (v.index // CUBE_FACE_PIECES == face) and v.arrangement.piece_type == piece_type.value,
                 pieces
             )
         )
+        return sorted(pieces, key=lambda v: v.rm_index)
 
 
 @dataclass
@@ -164,7 +165,7 @@ class CubeFace(Enum):
     L = 3
     U = 4
     D = 5
-    SKIRT_MAP = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
+    _SKIRT_MAP = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
 
     def __init__(self, _):
         self._edges = []
@@ -208,6 +209,8 @@ class CubeFace(Enum):
     @edges.setter
     def edges(self, value: List[CubePiece]):
         self._edges = value
+        if len(self._corners) > 0:
+            self._set_skirt()
 
     @property
     def corners(self) -> List[CubePiece]:
@@ -216,14 +219,45 @@ class CubeFace(Enum):
     @corners.setter
     def corners(self, value: List[CubePiece]):
         self._corners = value
+        if len(self._edges) > 0:
+            self._set_skirt()
 
-    @property
-    def skirt(self) -> List[List[int]]:
-        return self._skirt
+    def _set_skirt(self):
+        """ The skirt is the first row or column of cubes surrounding the current face, it is important because it rotates along with the
+            face. Having a consistent definition for the positioning of this area allows us to create generic translations regardless of positioning
 
-    @skirt.setter
-    def skirt(self, value: List[List[int]]):
-        self._skirt = value
+            In row major order, the skirt starts from the bottom-left of a cube, and each cube index corresponds to the next mapped area
+
+            CUBE FACE:
+            1  2  3
+            4  5  6
+            7  8  9
+
+            We index the position on the face but use our adjacency map to locate the piece bordering these cubes.
+        """
+        # Define the skirt map
+        skirt_pieces = [*self._edges, *self._corners]
+        for group in self._SKIRT_MAP.value:
+            skirt_group = []
+            for x, edge in enumerate(group):
+                # Cubes have clockwise arrangements by design, accessing the second index is only done on the first of each face
+                index_pop = 2 if x == 0 else 1
+
+                # Locate a piece that maches the index
+                found_piece = list(filter(lambda v: v.rm_index == edge, skirt_pieces))[0]
+
+                # Values need to wrap around differently for corners and edges
+                cutoff = 3 if found_piece.arrangement.piece_type == "CORNER" else 2
+
+                # Obtain skirt value indexes
+                values = found_piece.arrangement.indexes
+                offset = values.index(found_piece.index + 1)
+                offset_index = (index_pop + offset) % cutoff
+                mapped_value = values[offset_index]
+
+                # Save skirt index within group
+                skirt_group.append(mapped_value)
+            self._skirt.append(skirt_group)
 
     def rotate(self, pieces, direction="CW"):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
@@ -237,7 +271,7 @@ class CubeFace(Enum):
             self.edges[edge].value = temp_edge if x == 3 else self.edges[edge_cw[x + 1]].value
 
         # Rotate skirt
-        skirt = self.skirt if direction == "CW" else [self.skirt[0], *self.skirt[:0:-1]]
+        skirt = self._skirt if direction == "CW" else [self._skirt[0], *self._skirt[:0:-1]]
         for i in range(0, 3):
             temp = pieces[skirt[0][i] - 1].value
             for j in range(1, 5):
@@ -339,39 +373,8 @@ class Cube:
         for i in range(0, 6):
             # Obtain centerpiece
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CENTER)[0]
-
-            # Gather and sort edges
-            edges = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.EDGE)
-            self._faces(i).edges = sorted(edges, key=lambda v: v.rm_index)
-
-            # Gather and sort corners
-            corners = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CORNER)
-            self._faces(i).corners = sorted(corners, key=lambda v: v.rm_index)
-
-            skirt_pieces = [*edges, *corners]
-            skirt_arrangement = []
-            for group in self._faces.SKIRT_MAP.value:
-                skirt_group = []
-                for x, edge in enumerate(group):
-                    # Cubes have clockwise arrangements by design, accessing the second index is only done on the first of each face
-                    index_pop = 2 if x == 0 else 1
-
-                    # Locate a piece that maches the index
-                    found_piece = list(filter(lambda v: v.rm_index == edge, skirt_pieces))[0]
-
-                    # Values need to wrap around differently for corners and edges
-                    cutoff = 3 if found_piece.arrangement.piece_type == "CORNER" else 2
-
-                    # Obtain skirt value indexes
-                    values = found_piece.arrangement.indexes
-                    offset = values.index(found_piece.index + 1)
-                    offset_index = (index_pop + offset) % cutoff
-                    mapped_value = values[offset_index]
-
-                    # Save skirt index within group
-                    skirt_group.append(mapped_value)
-                skirt_arrangement.append(skirt_group)
-            self._faces(i).skirt = skirt_arrangement
+            self._faces(i).edges = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.EDGE)
+            self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CORNER)
 
     def rotate(self, rotate_command: List[str] = None):
         # Iterate through rotation commands, updating state each time
