@@ -31,7 +31,7 @@ class SolveTest(TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    @unittest.skip('face rotation tested, need to test simple skirt rotation')
+    # @unittest.skip('face rotation tested, need to test simple skirt rotation')
     def test_solve_020_ShouldReturnOkOnValidRotation(self):
         # Incomplete test with invalid edge and corner solutions, but face values are correct
         parm = {
