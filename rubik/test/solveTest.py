@@ -13,7 +13,6 @@ class SolveTest(TestCase):
         the expected results not being matched.            
     
     """
-    # @unittest.skip('need mixed cube to test distinct faces')
     def test_solve_010_ShouldReturnOkOnValidFaceRotation(self):
         parm = {
             'op': 'solve',
@@ -31,9 +30,7 @@ class SolveTest(TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    # @unittest.skip('face rotation tested, need to test simple skirt rotation')
     def test_solve_020_ShouldReturnOkOnValidRotation(self):
-        # Incomplete test with invalid edge and corner solutions, but face values are correct
         parm = {
             'op'    : 'solve',
             'cube'  : '544204041130114012542220402110535323513045102534352533',
@@ -42,6 +39,24 @@ class SolveTest(TestCase):
         expected = {
             'status': 'ok',
             'cube'  : '025404144130014212542220402115533324513045350011352533',
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        cube = result.get('cube', None)
+        self.assertEqual(expected['cube'], cube)
+        
+    def test_solve_030_ShouldReturnOkOnComplexRotation(self):
+        """ Currently, we cannot rotate the cube counter clockwise as the code does not exist. Test with clockwise rotations first. """
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '000000000111111111222222222333333333444444444555555555',
+            'rotate': 'RULBFD'
+        }
+        expected = {
+            'status': 'ok',
+            'cube'  : '044001232322015551443223010431435555211244500301351324',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
