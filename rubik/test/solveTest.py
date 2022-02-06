@@ -36,12 +36,12 @@ class SolveTest(TestCase):
         # Incomplete test with invalid edge and corner solutions, but face values are correct
         parm = {
             'op'    : 'solve',
-            'cube'  : 'rooywowobbgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg',
+            'cube'  : '544204041130114012542220402110535323513045102534352533',
             'rotate': 'F'
         }
         expected = {
             'status': 'ok',
-            'cube'  : 'wyrowoboobgwbbowbyoryyywowybbwrgrgygrbgworbwyrgogryrgg',
+            'cube'  : '025404144130014212452220402115533324513045350011352533',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
