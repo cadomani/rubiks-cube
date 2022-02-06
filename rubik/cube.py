@@ -229,6 +229,11 @@ class CubePiece:
     final_arrangement: CubeArrangement or None = None
     current_value: str = ""
 
+    def shift(self, new_value):
+        temp = self.value
+        self.value = new_value
+        return temp
+
 
 class CubeFace(Enum):
     """
@@ -327,9 +332,6 @@ class CubeFace(Enum):
         new_edges[0].value = temp2
         self.corners = new_corners
         self.edges = new_edges
-
-        # Rotate skirt
-        pass
 
 
 class Cube:
@@ -449,6 +451,7 @@ class Cube:
             self._faces(i).skirt = skirt_arrangement
 
     def rotate(self, rotate_command: List[str] = None):
+        # CW =
         for command in rotate_command:
             direction = "CW"
             if ord(command) >= 97:
@@ -458,27 +461,21 @@ class Cube:
 
             # Obtain skirt for this face rotation
             skirt = self._faces[command].skirt
-
-            # Rotate skirt values
-            temp_l0 = self._pieces[skirt[0][0] - 1].value
-            temp_l1 = self._pieces[skirt[0][1] - 1].value
-            temp_l2 = self._pieces[skirt[0][2] - 1].value
-            print(temp_l0, temp_l1, temp_l2)
-            # for x, group in enumerate(skirt):
-            #     for piece in group:
-            self._pieces[skirt[0][0] - 1].value = self._pieces[skirt[3][0] - 1].value
-            self._pieces[skirt[0][1] - 1].value = self._pieces[skirt[3][1] - 1].value
-            self._pieces[skirt[0][2] - 1].value = self._pieces[skirt[3][2] - 1].value
-            self._pieces[skirt[3][0] - 1].value = self._pieces[skirt[2][0] - 1].value
-            self._pieces[skirt[3][1] - 1].value = self._pieces[skirt[2][1] - 1].value
-            self._pieces[skirt[3][2] - 1].value = self._pieces[skirt[2][2] - 1].value
-            self._pieces[skirt[2][0] - 1].value = self._pieces[skirt[1][0] - 1].value
-            self._pieces[skirt[2][1] - 1].value = self._pieces[skirt[1][1] - 1].value
-            self._pieces[skirt[2][2] - 1].value = self._pieces[skirt[1][2] - 1].value
-            self._pieces[skirt[1][0] - 1].value = temp_l0
-            self._pieces[skirt[1][1] - 1].value = temp_l1
-            self._pieces[skirt[1][2] - 1].value = temp_l2
+            self._swap_skirt_edges(skirt, "CW")
         self._reconstruct()
+
+    def _swap_skirt_edges(self, skirts, direction):
+        for i in range(0, 3):
+            temp = self._pieces[skirts[0][i] - 1].value
+            for j in range(1, 5):
+                cube_index = skirts[j % 4][i] - 1
+                temp = self._pieces[cube_index].shift(temp)
+
+                # temp = self._pieces[]
+        # for i, group in enumerate(skirts):
+        #     for j, piece in enumerate(group):
+        #         self._pieces[val].shift()
+        # pass
 
     def _reconstruct(self):
         """ Update cube string by appending all cube values in order to a string. """
