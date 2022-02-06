@@ -155,6 +155,23 @@ class SolveTest(unittest.TestCase):
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
         
+    def test_solve_911_ShouldReturnErrorOnInvalidRotation(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
+            'rotate': 'myrb'
+        }
+        expected = {
+            'status': 'error: the rotate command is invalid'
+        }
+
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+        
     def test_solve_911_ShouldReturnErrorOnMissingRotation(self):
         parm = {
             'op'    : 'solve',
