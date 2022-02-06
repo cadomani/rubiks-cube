@@ -121,16 +121,16 @@ class CubeArrangement(Enum):
 
     CORNER_A = PieceArrangement(PieceType.CORNER, [1, 30, 43], [0, 29, 42], {0, 4, 3})
     CORNER_B = PieceArrangement(PieceType.CORNER, [3, 45, 10], [2, 44, 9], {0, 1, 4})
-    CORNER_C = PieceArrangement(PieceType.CORNER, [7, 46, 36], [6, 45, 35], {0, 3, 5})
-    CORNER_D = PieceArrangement(PieceType.CORNER, [9, 16, 48], [8, 15, 47], {0, 1, 5})
+    CORNER_C = PieceArrangement(PieceType.CORNER, [9, 16, 48], [8, 15, 47], {0, 1, 5})
+    CORNER_D = PieceArrangement(PieceType.CORNER, [7, 46, 36], [6, 45, 35], {0, 3, 5})
     CORNER_E = PieceArrangement(PieceType.CORNER, [19, 12, 39], [18, 11, 38], {1, 2, 4})
     CORNER_F = PieceArrangement(PieceType.CORNER, [21, 37, 28], [20, 36, 27], {2, 3, 4})
-    CORNER_G = PieceArrangement(PieceType.CORNER, [25, 54, 18], [24, 53, 17], {1, 2, 5})
-    CORNER_H = PieceArrangement(PieceType.CORNER, [27, 34, 52], [26, 33, 51], {2, 3, 5})
+    CORNER_G = PieceArrangement(PieceType.CORNER, [27, 34, 52], [26, 33, 51], {2, 3, 5})
+    CORNER_H = PieceArrangement(PieceType.CORNER, [25, 54, 18], [24, 53, 17], {1, 2, 5})
     EDGE_A   = PieceArrangement(PieceType.EDGE, [2, 44], [1, 43], {0, 4})
-    EDGE_B   = PieceArrangement(PieceType.EDGE, [4, 33], [3, 32], {0, 3})
-    EDGE_C   = PieceArrangement(PieceType.EDGE, [6, 13], [5, 12], {0, 1})
-    EDGE_D   = PieceArrangement(PieceType.EDGE, [8, 47], [7, 46], {0, 5})
+    EDGE_B   = PieceArrangement(PieceType.EDGE, [6, 13], [5, 12], {0, 1})
+    EDGE_C   = PieceArrangement(PieceType.EDGE, [8, 47], [7, 46], {0, 5})
+    EDGE_D   = PieceArrangement(PieceType.EDGE, [4, 33], [3, 32], {0, 3})
     EDGE_E   = PieceArrangement(PieceType.EDGE, [11, 42], [10, 41], {1, 4})
     EDGE_F   = PieceArrangement(PieceType.EDGE, [15, 22], [14, 21], {1, 2})
     EDGE_G   = PieceArrangement(PieceType.EDGE, [17, 51], [16, 50], {1, 5})
@@ -254,6 +254,7 @@ class CubeFace(Enum):
         self._corners = []
         self._center = None
         self._color = None
+        self._skirt = []
 
     @property
     def opposite(self):
@@ -298,6 +299,14 @@ class CubeFace(Enum):
     @corners.setter
     def corners(self, value: List[CubePiece]):
         self._corners = value
+
+    @property
+    def skirt(self):
+        return self._skirt
+
+    @skirt.setter
+    def skirt(self, value: List[List[int]]):
+        self._skirt = value
 
     def rotate(self, direction="CW"):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
@@ -369,7 +378,7 @@ class Cube:
             piece = CubePiece(
                 x,
                 piece_value,
-                rm_index=(x + 1) % 9,
+                rm_index=9 if (x + 1) % 9 == 0 else (x + 1) % 9,
                 face=mapped_value,
                 arrangement=arrangement,
                 adjacent_faces={self._cube_map[face] for face in arrangement.true_indexes},
@@ -415,10 +424,29 @@ class Cube:
 
     def _update(self):
         """ Once the cube object has been filled, calculate faces, corners, and edges. """
+        skirt_map = [(7, 4, 1), (1, 2, 3), (3, 6, 9), (9, 8, 7)]
         for i in range(0, 6):
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, PieceType.CENTER, i)[0]
             self._faces(i).edges = CubeArrangement.get_face_pieces(self._pieces, PieceType.EDGE, i)
             self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, PieceType.CORNER, i)
+            skirt_pieces = [*self._faces(i).edges, *self._faces(i).corners]
+            skirt_arrangement = []
+            for group in skirt_map:
+                itemset = []
+                for x, edge in enumerate(group):
+                    index_pop = 1
+                    if x == 0:
+                        index_pop = 2
+                    found_piece = list(filter(lambda v: v.rm_index == edge, skirt_pieces))[0]
+                    cutoff = 3 if found_piece.arrangement.piece_type == "CORNER" else 2
+                    values = found_piece.arrangement.indexes
+                    offset = values.index(found_piece.index + 1)
+                    offset_index = (index_pop + offset) % cutoff
+                    mapped_value = values[offset_index]
+                    itemset.append(mapped_value)
+                skirt_arrangement.append(itemset)
+            print(skirt_arrangement)
+            self._faces(i).skirt = skirt_arrangement
 
     def rotate(self, rotate_command: List[str] = None):
         for command in rotate_command:
