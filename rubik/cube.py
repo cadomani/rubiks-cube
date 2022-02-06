@@ -297,19 +297,12 @@ class CubeFace(Enum):
             self.edges[edge].value = temp_edge if x == 3 else self.edges[edge_cw[x + 1]].value
 
         # Rotate skirt
-        if direction == "CW":
-            for i in range(0, 3):
-                temp = pieces[self.skirt[0][i] - 1].value
-                for j in range(1, 5):
-                    cube_index = self.skirt[j % 4][i] - 1
-                    temp = pieces[cube_index].shift(temp)
-        else:
-            skirt = [self.skirt[0], *self.skirt[:0:-1]]
-            for i in range(0, 3):
-                temp = pieces[skirt[0][i] - 1].value
-                for j in range(1, 5):
-                    cube_index = skirt[j % 4][i] - 1
-                    temp = pieces[cube_index].shift(temp)
+        skirt = self.skirt if direction == "CW" else [self.skirt[0], *self.skirt[:0:-1]]
+        for i in range(0, 3):
+            temp = pieces[skirt[0][i] - 1].value
+            for j in range(1, 5):
+                cube_index = skirt[j % 4][i] - 1
+                temp = pieces[cube_index].shift(temp)
 
 
 class Cube:
