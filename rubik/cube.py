@@ -435,7 +435,7 @@ class Cube:
             direction = "CW"
             if ord(command) >= 97:
                 direction = "ACW"
-            print(f"{self._faces[command.upper()].name} turn {direction}")
+            # print(f"{self._faces[command.upper()].name} turn {direction}")
 
             # Perform in-place rotation within face
             self._faces[command.upper()].rotate(self._pieces, direction)
