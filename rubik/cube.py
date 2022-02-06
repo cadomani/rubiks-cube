@@ -290,18 +290,26 @@ class CubeFace(Enum):
         # Rotate face
         temp_corner = self.corners[0].value
         temp_edge = self.edges[0].value
-        corner_cw = [0, 2, 3, 1]
-        edge_cw = [0, 1, 3, 2]
+        corner_cw = [0, 2, 3, 1] if direction == "CW" else [0, 1, 2, 3]
+        edge_cw = [0, 1, 3, 2] if direction == "CW" else [0, 2, 3, 1]
         for x, (corner, edge) in enumerate(zip(corner_cw, edge_cw)):
             self.corners[corner].value = temp_corner if x == 3 else self.corners[corner_cw[x + 1]].value
             self.edges[edge].value = temp_edge if x == 3 else self.edges[edge_cw[x + 1]].value
 
         # Rotate skirt
-        for i in range(0, 3):
-            temp = pieces[self.skirt[0][i] - 1].value
-            for j in range(1, 5):
-                cube_index = self.skirt[j % 4][i] - 1
-                temp = pieces[cube_index].shift(temp)
+        if direction == "CW":
+            for i in range(0, 3):
+                temp = pieces[self.skirt[0][i] - 1].value
+                for j in range(1, 5):
+                    cube_index = self.skirt[j % 4][i] - 1
+                    temp = pieces[cube_index].shift(temp)
+        else:
+            skirt = [self.skirt[0], *self.skirt[:0:-1]]
+            for i in range(0, 3):
+                temp = pieces[skirt[0][i] - 1].value
+                for j in range(1, 5):
+                    cube_index = skirt[j % 4][i] - 1
+                    temp = pieces[cube_index].shift(temp)
 
 
 class Cube:
@@ -425,13 +433,14 @@ class Cube:
             direction = "CW"
             if ord(command) >= 97:
                 direction = "ACW"
-            print(f"{self._faces[command].name} turn {direction}")
+            print(f"{self._faces[command.upper()].name} turn {direction}")
 
             # Perform in-place rotation within face
-            self._faces[command].rotate(self._pieces, direction)
+            self._faces[command.upper()].rotate(self._pieces, direction)
 
             # Save states to be able to show stages along with final results
             self._reconstruct()
+            print(self._cube_string)
             self._state.append(self._cube_string)
 
     def _reconstruct(self):
