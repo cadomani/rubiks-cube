@@ -273,12 +273,16 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
         
-    @unittest.skip('invalid rotation parameters given: "Tt"')
+    # @unittest.skip('invalid rotation parameters given: "Tt"')
     def test_solve_071_ShouldReturnKnownSolvedCube(self):
+        """ This test includes a non-standard rotate parameter where T and t indicate U and u respectively, and U and u indicate D and d.
+            Unfortunately, there isn't a way to know for certain that a U or u without the presence of a D or T belongs to one or the other group.
+            Assume that a customer that uses a T is using T/U notation, and a customer using a D/U or U only is using the standard D/U notation.
+        """
         parm = {
             'op'    : 'solve',
             'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
-            'rotate': 'FLFFBbbuLfUrFLuRRuLLuRRb'
+            'rotate': 'FLFFBTTuLfUrFLuRRuLLuRRt'
         }
         expected = {
             'status': 'ok',
