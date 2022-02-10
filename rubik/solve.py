@@ -15,6 +15,10 @@ def _solve(parms):
         if rotate_command is None or rotate_command == '':
             rotate_command = "F"
 
+        # Return a standardized copy of the rotate command if it contains 'Tt' and 'Uu' references. Only match in the presence of a 'Tt'
+        if 't' in rotate_command or 'T' in rotate_command:
+            rotate_command = rotate_command.replace('u', 'd').replace('U', 'D').replace('T', 'U').replace('t', 'u')
+
         # Match valid characters
         rotations = re.findall(VALID_ROTATIONS_REGEX, rotate_command, re.IGNORECASE)
         if len(rotations) != len(rotate_command):
