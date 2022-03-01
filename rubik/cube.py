@@ -394,6 +394,14 @@ class Cube:
             self._reconstruct()
             self._state.append(self._cube_string)
 
+    def solve(self):
+        centerpiece = self._faces.D.center.value
+        for edge in self._faces.D.edges:
+            if edge.value != centerpiece:
+                return "Not implemented"
+        return ""
+
+
     def _reconstruct(self):
         """ Update cube string by appending all cube values in order to a string to save state, and remap (this is useful in case a center turn is ever added). """
         self._cube_string = "".join([f.value for f in self._pieces])
