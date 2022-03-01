@@ -13,6 +13,10 @@ class SolveTest(unittest.TestCase):
     
     """
 
+    # --------------------------------------------------------
+    # HAPPY PATH TESTS
+    # --------------------------------------------------------
+
     def test_solve_010_ShouldReturnSolutionOnMissingRotateParameter(self):
         parm = {
             'op'    : 'solve',
@@ -97,7 +101,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_030_ShouldReturnCubeOnOnSimpleRotations(self):
+    def test_solve_023_ShouldReturnCubeOnOnSimpleRotations(self):
         """ Test with clockwise rotations only """
         parm = {
             'op'    : 'solve',
@@ -115,7 +119,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_031_ShouldReturnCubeOnOnSimpleRotations(self):
+    def test_solve_024_ShouldReturnCubeOnOnSimpleRotations(self):
         """ Test with clockwise rotations only """
         parm = {
             'op'    : 'solve',
@@ -133,7 +137,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_040_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
+    def test_solve_025_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
             'op'    : 'solve',
@@ -151,7 +155,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_041_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
+    def test_solve_026_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
             'op'    : 'solve',
@@ -169,7 +173,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_042_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
+    def test_solve_027_ShouldReturnOriginalCubeOnReturnToHomeRotation(self):
         """ Test and undo moves to validate robustness. """
         parm = {
             'op'    : 'solve',
@@ -187,7 +191,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_050_ShouldReturnOriginalCubeOnReturnToHomeAlgorithm(self):
+    def test_solve_028_ShouldReturnOriginalCubeOnReturnToHomeAlgorithm(self):
         """ Test and undo moves to validate robustness. """
         parm = {
             'op'    : 'solve',
@@ -205,7 +209,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_060_ShouldReturnKnownScrambledCube(self):
+    def test_solve_030_ShouldReturnKnownScrambledCube(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '000000000111111111222222222333333333444444444555555555',
@@ -222,7 +226,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    def test_solve_070_ShouldReturnKnownSolvedCube(self):
+    def test_solve_031_ShouldReturnKnownSolvedCube(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '425100353215413244324524020151135105232040011024353543',
@@ -240,7 +244,7 @@ class SolveTest(unittest.TestCase):
         self.assertEqual(expected['cube'], cube)
         
     # @unittest.skip('invalid rotation parameters given: "Tt"')
-    def test_solve_071_ShouldReturnKnownSolvedCube(self):
+    def test_solve_032_ShouldReturnKnownSolvedCube(self):
         """ This test includes a non-standard rotate parameter where T and t indicate U and u respectively, and U and u indicate D and d.
             Unfortunately, there isn't a way to know for certain that a U or u without the presence of a D or T belongs to one or the other group.
             Assume that a customer that uses a T is using T/U notation, and a customer using a D/U or U only is using the standard D/U notation.
@@ -261,22 +265,31 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    # def test_solve_080_ShouldReturnRotationsOnSolveRequest(self):
-    #     parm = {
-    #         'op'    : 'solve',
-    #         'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
-    #     }
-    #     expected = {
-    #         'status': 'ok',
-    #         'rotations': 'Not yet calculated'
-    #     }
-    #     result = solve._solve(parm)
-    #     status = result.get('status', None)
-    #     self.assertEqual(expected['status'], status)
-    #
-    #     cube = result.get('cube', None)
-    #     self.assertEqual(expected['cube'], cube)
+    # --------------------------------------------------------
+    # SINGLE MOVE SOLUTIONS
+    # --------------------------------------------------------
+    
+    def test_solve_040_ShouldReturnSingleRotationOnSolveRequest(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
+        }
+        expected = {
+            'status': 'ok',
+            'rotations': 'r'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
 
+        rotations = result.get('rotations', None)
+        self.assertEqual(expected['rotations'], rotations)
+    
+    
+    # --------------------------------------------------------
+    # SAD PATH TESTS
+    # --------------------------------------------------------
+    
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
             'op'    : 'solve',
