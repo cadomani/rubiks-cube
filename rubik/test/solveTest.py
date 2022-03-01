@@ -26,8 +26,8 @@ class SolveTest(unittest.TestCase):
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        cube = result.get('cube', None)
-        self.assertEqual(expected['cube'], cube)
+        rotations = result.get('rotations', None)
+        self.assertEqual(expected['rotations'], rotations)
 
     def test_solve_011_ShouldReturnFrontRotation(self):
         parm = {
