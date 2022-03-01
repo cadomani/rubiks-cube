@@ -272,7 +272,7 @@ class SolveTest(unittest.TestCase):
     def test_solve_040_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
-            'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
+            'cube'  : '005005005111111111422422422333333333440440440552552552',
         }
         expected = {
             'status': 'ok',
@@ -284,8 +284,7 @@ class SolveTest(unittest.TestCase):
 
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
-    
-    
+
     # --------------------------------------------------------
     # SAD PATH TESTS
     # --------------------------------------------------------
