@@ -13,14 +13,14 @@ class SolveTest(unittest.TestCase):
     
     """
 
-    def test_solve_010_ShouldReturnFrontRotationOnMissingRotateParameter(self):
+    def test_solve_010_ShouldReturnSolutionOnMissingRotateParameter(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
         }
         expected = {
             'status': 'ok',
-            'cube'  : 'bbbbbbbbbyrryrryrrgggggggggoowoowoowyyyyyyooorrrwwwwww',
+            'rotations'  : '',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -28,46 +28,12 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
-        
-    
-    def test_solve_011_ShouldReturnFrontRotationOnMissingRotateParameter(self):
-        parm = {
-            'op'    : 'solve',
-            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
-        }
-        expected = {
-            'status': 'ok',
-            'cube'  : 'gggggggggwrrwrrwrrbbbbbbbbbooyooyooywwwwwwooorrryyyyyy',
-        }
-        result = solve._solve(parm)
-        status = result.get('status', None)
-        self.assertEqual(expected['status'], status)
 
-        cube = result.get('cube', None)
-        self.assertEqual(expected['cube'], cube)
-        
-    def test_solve_012_ShouldReturnFrontRotationOnMissingRotateParameter(self):
+    def test_solve_011_ShouldReturnFrontRotation(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
-            'rotate': None
-        }
-        expected = {
-            'status': 'ok',
-            'cube'  : 'gggggggggwrrwrrwrrbbbbbbbbbooyooyooywwwwwwooorrryyyyyy',
-        }
-        result = solve._solve(parm)
-        status = result.get('status', None)
-        self.assertEqual(expected['status'], status)
-
-        cube = result.get('cube', None)
-        self.assertEqual(expected['cube'], cube)
-            
-    def test_solve_013_ShouldReturnFrontRotationOnMissingRotateParameter(self):
-        parm = {
-            'op'    : 'solve',
-            'cube'  : 'gggggggggrrrrrrrrrbbbbbbbbbooooooooowwwwwwwwwyyyyyyyyy',
-            'rotate': ''
+            'rotate': 'F'
         }
         expected = {
             'status': 'ok',
@@ -294,6 +260,22 @@ class SolveTest(unittest.TestCase):
 
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
+
+    # def test_solve_080_ShouldReturnRotationsOnSolveRequest(self):
+    #     parm = {
+    #         'op'    : 'solve',
+    #         'cube'  : 'rbbgbobbgrgwyrywyobggrggywgoryyowowwyoobyrgwyrorrwbwob',
+    #     }
+    #     expected = {
+    #         'status': 'ok',
+    #         'rotations': 'Not yet calculated'
+    #     }
+    #     result = solve._solve(parm)
+    #     status = result.get('status', None)
+    #     self.assertEqual(expected['status'], status)
+    #
+    #     cube = result.get('cube', None)
+    #     self.assertEqual(expected['cube'], cube)
 
     def test_solve_910_ShouldReturnErrorOnInvalidRotation(self):
         parm = {
