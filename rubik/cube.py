@@ -262,8 +262,13 @@ class CubeFace(Enum):
                 skirt_group.append(mapped_value)
             self._skirt.append(skirt_group)
 
-    def rotate(self, pieces, direction="CW"):
+    def rotate(self, pieces, command):
         """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
+        # Determine direction by upper/lowercase ascii value
+        direction = "CW"
+        if ord(command) >= 97:
+            direction = "ACW"
+
         # Rotate face
         temp_corner = self.corners[0].value
         temp_edge = self.edges[0].value
@@ -433,13 +438,8 @@ class Cube:
     def rotate(self, rotate_command: List[str] = None):
         # Iterate through rotation commands, updating state each time
         for command in rotate_command:
-            # Determine direction by upper/lowercase ascii value
-            direction = "CW"
-            if ord(command) >= 97:
-                direction = "ACW"
-
             # Perform in-place rotation within face
-            self._faces[command.upper()].rotate(self._pieces, direction)
+            self._faces[command.upper()].rotate(self._pieces, command)
 
             # Save states to be able to show stages along with final results
             self._reconstruct()
@@ -524,8 +524,7 @@ class Cube:
             elif "_C" in arrangement or "_G" in arrangement or "_J" in arrangement or "_L" in arrangement:
                 matches['C'] = Cube._solve_configuration(heuristics_C, candidate, faces, pieces, current_solved, centerpiece)
             else:
-                print("Unhandled arrangement error")
-                return None
+                raise Exception("Unimplemented arrangement error")
 
         # Visually test solutions
         import pprint
@@ -544,9 +543,9 @@ class Cube:
                 if best is None:
                     best = item
                 else:
-                    if item['success']:
-                        if item['set'] >= best['set'] or item['steps'] <= best['steps']:
-                            best = item
+                    # Should instead sort by best matches
+                    if item['set'] >= best['set'] and item['steps'] <= best['steps']:
+                        best = item
         return best['heuristic']
 
     @staticmethod
@@ -562,36 +561,30 @@ class Cube:
                     translated_heuristic = CubeFace.translate_rotation(command.upper(), candidate.index // 9)
 
                     # Determine direction by upper/lowercase ascii value
-                    direction = "CW"
                     if ord(command) >= 97:
-                        direction = "ACW"
                         translated_heuristic = translated_heuristic.lower()
                     new_heuristic += translated_heuristic
 
                     # Perform in-place rotation within face
-                    faces[translated_heuristic.upper()].rotate(pieces, direction)
+                    faces[translated_heuristic.upper()].rotate(pieces, translated_heuristic)
+                print(new_heuristic)
 
                 # Add to a match object to determine viability
-                new_set = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
-                matches.append(
-                    {
-                        "heuristic": new_heuristic,
-                        "steps"    : len(new_heuristic),
-                        "success"  : current_set < new_set,
-                        "set"      : new_set,
-                        "new_cube" : "".join([f.value for f in pieces])
-                    }
-                )
+                new_set = list(filter(lambda v: v.value == centerpiece and v.arrangement.piece_type == 'EDGE', pieces[45:53])).__len__()
+                if current_set < new_set:
+                    matches.append(
+                        {
+                            "heuristic": new_heuristic,
+                            "steps"    : len(new_heuristic),
+                            "set"      : new_set,
+                            "new_cube" : "".join([f.value for f in pieces])
+                        }
+                    )
 
                 # Undo operations by reversing heuristic steps and applying the inverse
                 for command in reversed(new_heuristic.swapcase()):
-                    # Determine direction by upper/lowercase ascii value
-                    direction = "CW"
-                    if ord(command) >= 97:
-                        direction = "ACW"
-
                     # Perform in-place rotation within face
-                    faces[command.upper()].rotate(pieces, direction)
+                    faces[command.upper()].rotate(pieces, command)
 
                 # Undo changes made to faces
                 for i in range(0, CUBE_FACES):
