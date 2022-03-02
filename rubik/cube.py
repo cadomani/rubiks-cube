@@ -460,7 +460,6 @@ class Cube:
         pieces = copy.deepcopy(self._pieces)
 
         # Identify candidates
-        solved_configuration = "000000000111111111222222222333333333444444444555555555"
         current_solved = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
         candidates = []
         possibilities = CubeArrangement.get_cohesive_pieces(pieces, centerpiece, PieceType.EDGE)
@@ -476,23 +475,47 @@ class Cube:
             "C": []
         }
 
-        # Parse through candidates to find best match
-        heuristics_A = ['r', 'Dr', 'DDr', 'dr', 'F', 'DF', 'DDF', 'dF', 'L', 'DL', 'DDL', 'dL', 'f', 'Df', 'DDf', 'df']
-        heuristics_B = ['FF', 'UFF', 'UUFF', 'uFF', 'Fr', 'fL', 'dFF', 'dFDr']
-        heurStd = ['UF', 'UUF', 'uF', 'Uf', 'UUf', 'uf']
-        for heur_a in heuristics_A:
-            for heur_b in heurStd:
-                heuristics_B.append(f"{heur_b}{heur_a}")
+        # Set common adjustment rotations
+        # Adjustment rotations: (0 -> 3) Rotate bottom D, DD, d, or None
+        adjustment_rotations = ['', 'D', 'DD', 'd']
 
+        # Heuristics A (center-right inner edge, or alternate adjacent piece)
+        #   Adjustment rotations: True
+        #   1. Rotate towards bottom depending on direction
+        heuristics_A = ['r', 'L']
+
+        # Heuristics B1 (top-center outer edge)
+        #   Adjustment rotations: False
+        #   1. Simple translation rotation from top to bottom
+        heuristics_B1 = ['FF', 'DFF', 'DDFF', 'dFF']
+
+        # Heuristics B2 (top-center inner edge)
+        #   Adjustment rotations: (0 -> 3) Rotate bottom D, DD, d, or None, then choose strategy 1 and either 2 or 3 for coverage
+        #   1. Direct drop: when we don't yet have three the rest of the cross, most efficient but doesn't work on last iteration.
+        #      From left:     fL
+        #      From right:    Fr
+        #   2. Adjustment drop: most efficient on last iteration, rotates empty row but requires counter-rotation to set
+        #   3. Hybrid: Combines direct drop with a counter rotation to replace unset piece
+        #      From left:     fLF
+        #      From right:    Frf
+        heuristics_B2_dd = ['Fr', 'fL']
+        heuristics_B2_ad = ['FDr', 'fdL']
+        heuristics_B2_hy = ['fLF', 'Frf']
+        heuristics_B2 = [*heuristics_B2_dd, *heuristics_B2_hy]
+
+        # Parse through candidates to find best match
         for candidate in candidates:
             # Save current arrangement for easy lookups
             arrangement = candidate.arrangement.name
 
             # Identify proper configuration by arrangement value
             if "_B" in arrangement or "_F" in arrangement or "_I" in arrangement or "_D" in arrangement in arrangement:
-                matches['A'] = Cube._solve_configuration(heuristics_A, candidate, faces, pieces, current_solved, centerpiece)
+                matches['A'] = Cube._solve_configuration(heuristics_A, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
             elif "_A" in arrangement or "_E" in arrangement or "_H" in arrangement or "_K" in arrangement:
-                matches['B'] = Cube._solve_configuration(heuristics_B, candidate, faces, pieces, current_solved, centerpiece)
+                if candidate.index // 9 == 4:
+                    matches['B'] = Cube._solve_configuration(heuristics_B1, candidate, faces, pieces, current_solved, centerpiece)
+                else:
+                    matches['B'] = Cube._solve_configuration(heuristics_B2, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
             elif "_C" in arrangement or "_G" in arrangement or "_J" in arrangement or "_L" in arrangement:
                 print("C syle arrangement")
             else:
@@ -522,53 +545,55 @@ class Cube:
         return best['heuristic']
 
     @staticmethod
-    def _solve_configuration(heuristics, candidate, faces, pieces, current_set, centerpiece):
+    def _solve_configuration(heuristics, candidate, faces, pieces, current_set, centerpiece, adjustment_rotations=''):
         # Try heuristics, log and undo
         matches = []
         for heuristic in heuristics:
-            # Iterate through rotation commands, updating state each time
-            new_heuristic = ""
-            for command in heuristic:
-                translated_heuristic = CubeFace.translate_rotation(command.upper(), candidate.index // 9)
+            # Create three more heuristic patterns based on adjustment rotations
+            for adjustment_pattern in adjustment_rotations:
+                # Iterate through rotation commands, updating state each time
+                new_heuristic = ''
+                for command in (adjustment_pattern + heuristic):
+                    translated_heuristic = CubeFace.translate_rotation(command.upper(), candidate.index // 9)
 
-                # Determine direction by upper/lowercase ascii value
-                direction = "CW"
-                if ord(command) >= 97:
-                    direction = "ACW"
-                    translated_heuristic = translated_heuristic.lower()
-                new_heuristic += translated_heuristic
+                    # Determine direction by upper/lowercase ascii value
+                    direction = "CW"
+                    if ord(command) >= 97:
+                        direction = "ACW"
+                        translated_heuristic = translated_heuristic.lower()
+                    new_heuristic += translated_heuristic
 
-                # Perform in-place rotation within face
-                faces[translated_heuristic.upper()].rotate(pieces, direction)
+                    # Perform in-place rotation within face
+                    faces[translated_heuristic.upper()].rotate(pieces, direction)
 
-            # Add to a match object to determine viability
-            new_set = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
-            matches.append(
-                {
-                    "heuristic": new_heuristic,
-                    "steps"    : len(heuristic),
-                    "success"  : current_set < new_set,
-                    "set"      : new_set,
-                    "new_cube" : "".join([f.value for f in pieces])
-                }
-            )
+                # Add to a match object to determine viability
+                new_set = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
+                matches.append(
+                    {
+                        "heuristic": new_heuristic,
+                        "steps"    : len(new_heuristic),
+                        "success"  : current_set < new_set,
+                        "set"      : new_set,
+                        "new_cube" : "".join([f.value for f in pieces])
+                    }
+                )
 
-            # Undo operations by reversing heuristic steps and applying the inverse
-            for command in reversed(new_heuristic.swapcase()):
-                # Determine direction by upper/lowercase ascii value
-                direction = "CW"
-                if ord(command) >= 97:
-                    direction = "ACW"
+                # Undo operations by reversing heuristic steps and applying the inverse
+                for command in reversed(new_heuristic.swapcase()):
+                    # Determine direction by upper/lowercase ascii value
+                    direction = "CW"
+                    if ord(command) >= 97:
+                        direction = "ACW"
 
-                # Perform in-place rotation within face
-                faces[command.upper()].rotate(pieces, direction)
+                    # Perform in-place rotation within face
+                    faces[command.upper()].rotate(pieces, direction)
 
-            # undo changes made to faces
-            for i in range(0, CUBE_FACES):
-                # Obtain centerpiece, edges, and corners
-                faces(i).center = CubeArrangement.get_face_pieces(pieces, i, PieceType.CENTER)[0]
-                faces(i).edges = CubeArrangement.get_face_pieces(pieces, i, PieceType.EDGE)
-                faces(i).corners = CubeArrangement.get_face_pieces(pieces, i, PieceType.CORNER)
+                # Undo changes made to faces
+                for i in range(0, CUBE_FACES):
+                    # Obtain centerpiece, edges, and corners
+                    faces(i).center = CubeArrangement.get_face_pieces(pieces, i, PieceType.CENTER)[0]
+                    faces(i).edges = CubeArrangement.get_face_pieces(pieces, i, PieceType.EDGE)
+                    faces(i).corners = CubeArrangement.get_face_pieces(pieces, i, PieceType.CORNER)
         return matches
 
     def _reconstruct(self):

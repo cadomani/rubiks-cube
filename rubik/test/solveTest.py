@@ -308,7 +308,7 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'dRDb'
+            'rotations': 'Rbr'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
