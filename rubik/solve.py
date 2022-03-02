@@ -16,7 +16,7 @@ def _solve(parms):
 
         # Pass valid rotation if it is empty
         if rotate_command is None or rotate_command == '':
-            return {"status": "ok", "rotations": cube.solve()}
+            return {"status": "ok", "rotations": cube.solve(cube_phase=1)}
         else:
             # Return a standardized copy of the rotate command if it contains 'Tt' and 'Uu' references. Only match in the presence of a 'Tt'
             if 't' in rotate_command or 'T' in rotate_command:
