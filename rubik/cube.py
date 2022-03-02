@@ -458,95 +458,124 @@ class Cube:
         # Wildly inefficient, but okay for a first try
         faces = copy.deepcopy(self._faces)
         pieces = copy.deepcopy(self._pieces)
+        original = "".join([f.value for f in self._pieces])
 
-        # Identify candidates
-        current_solved = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
-        candidates = []
-        possibilities = CubeArrangement.get_cohesive_pieces(pieces, centerpiece, PieceType.EDGE)
-        for possibility in possibilities:
-            # Includ pieces in bottom layer only if they are not actually located at the bottom of the cube
-            if possibility.index < 45:
-                candidates.append(possibility)
+        unsolved_pieces = True
+        final_rotations = ''
+        remaining_iterations = 100
+        while unsolved_pieces:
+            # Identify candidates
+            current_solved = list(filter(lambda v: v.value == centerpiece, faces.D.edges)).__len__()
+            candidates = []
+            possibilities = CubeArrangement.get_cohesive_pieces(pieces, centerpiece, PieceType.EDGE)
+            for possibility in possibilities:
+                # Include pieces in bottom layer only if they are not actually located at the bottom of the cube
+                if possibility.index < 45:
+                    candidates.append(possibility)
+            if len(candidates) == 0:
+                break
 
-        # Create data container to find best match
-        matches = {
-            "A": [],
-            "B": [],
-            "C": []
-        }
+            # Create data container to find best match
+            matches = {
+                "A": [],
+                "B": [],
+                "C": []
+            }
 
-        # Set common adjustment rotations
-        # Adjustment rotations: (0 -> 3) Rotate bottom D, DD, d, or None
-        adjustment_rotations = ['', 'D', 'DD', 'd']
+            # Set common adjustment rotations
+            # Adjustment rotations: (0 -> 3) Rotate bottom D, DD, d, or None
+            adjustment_rotations = ['', 'D', 'DD', 'd']
 
-        # Heuristics A (center-right inner edge, or alternate adjacent piece)
-        #   Adjustment rotations: True
-        #   1. Rotate towards bottom depending on direction
-        heuristics_A = ['r', 'L']
+            # Heuristics A (center-right inner edge, or alternate adjacent piece)
+            #   Adjustment rotations: True
+            #   1. Rotate towards bottom depending on direction
+            heuristics_A = ['r', 'L']
 
-        # Heuristics B1 (top-center outer edge)
-        #   Adjustment rotations: False
-        #   1. Simple translation rotation from top to bottom
-        heuristics_B1 = ['FF', 'DFF', 'DDFF', 'dFF']
+            # Heuristics B1 (top-center outer edge)
+            #   Adjustment rotations: False
+            #   1. Simple translation rotation from top to bottom
+            heuristics_B1 = ['FF', 'DFF', 'DDFF', 'dFF']
 
-        # Heuristics B2 (top-center inner edge)
-        #   Adjustment rotations: True, then choose strategy 1 and either 2 or 3 for coverage
-        #   1. Direct drop: when we don't yet have three the rest of the cross, most efficient but doesn't work on last iteration.
-        #      From left:     fL
-        #      From right:    Fr
-        #   2. Adjustment drop: most efficient on last iteration, rotates empty row but requires counter-rotation to set
-        #   3. Hybrid: Combines direct drop with a counter rotation to replace unset piece
-        #      From left:     fLF
-        #      From right:    Frf
-        heuristics_B2_dd = ['Fr', 'fL']
-        heuristics_B2_ad = ['FDr', 'fdL']
-        heuristics_B2_hy = ['fLF', 'Frf']
-        heuristics_B2 = [*heuristics_B2_dd, *heuristics_B2_hy]
+            # Heuristics B2 (top-center inner edge)
+            #   Adjustment rotations: True, then choose strategy 1 and either 2 or 3 for coverage
+            #   1. Direct drop: when we don't yet have three the rest of the cross, most efficient but doesn't work on last iteration.
+            #      From left:     fL
+            #      From right:    Fr
+            #   2. Adjustment drop: most efficient on last iteration, rotates empty row but requires counter-rotation to set
+            #   3. Hybrid: Combines direct drop with a counter rotation to replace unset piece
+            #      From left:     fLF
+            #      From right:    Frf
+            heuristics_B2_dd = ['Fr', 'fL']
+            heuristics_B2_ad = ['FDr', 'fdL']
+            heuristics_B2_hy = ['fLF', 'Frf']
+            heuristics_B2 = [*heuristics_B2_dd, *heuristics_B2_hy]
 
-        # Heuristics C (bottom-center inner edge)
-        #   Adjustment rotations: False
-        #   1. Logically, the piece is already above where it should be placed, a rotation step solves this piece
-        heuristics_C = ['fDr', 'FdL']
+            # Heuristics C (bottom-center inner edge)
+            #   Adjustment rotations: False
+            #   1. Logically, the piece is already above where it should be placed, a rotation step solves this piece
+            heuristics_C = ['fDr', 'FdL']
 
-        # Parse through candidates to find best match
-        for candidate in candidates:
-            # Save current arrangement for easy lookups
-            arrangement = candidate.arrangement.name
+            # Parse through candidates to find best match
+            best = None
+            for candidate in candidates:
+                # Save current arrangement for easy lookups
+                arrangement = candidate.arrangement.name
 
-            # Identify proper configuration by arrangement value
-            if "_B" in arrangement or "_F" in arrangement or "_I" in arrangement or "_D" in arrangement in arrangement:
-                matches['A'] = Cube._solve_configuration(heuristics_A, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
-            elif "_A" in arrangement or "_E" in arrangement or "_H" in arrangement or "_K" in arrangement:
-                if candidate.index // 9 == 4:
-                    matches['B'] = Cube._solve_configuration(heuristics_B1, candidate, faces, pieces, current_solved, centerpiece)
+                # Identify proper configuration by arrangement value
+                if "_B" in arrangement or "_F" in arrangement or "_I" in arrangement or "_D" in arrangement in arrangement:
+                    matches['A'] = Cube._solve_configuration(heuristics_A, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
+                elif "_A" in arrangement or "_E" in arrangement or "_H" in arrangement or "_K" in arrangement:
+                    if candidate.index // 9 == 4:
+                        matches['B'] = Cube._solve_configuration(heuristics_B1, candidate, faces, pieces, current_solved, centerpiece)
+                    else:
+                        matches['B'] = Cube._solve_configuration(heuristics_B2, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
+                elif "_C" in arrangement or "_G" in arrangement or "_J" in arrangement or "_L" in arrangement:
+                    matches['C'] = Cube._solve_configuration(heuristics_C, candidate, faces, pieces, current_solved, centerpiece)
                 else:
-                    matches['B'] = Cube._solve_configuration(heuristics_B2, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
-            elif "_C" in arrangement or "_G" in arrangement or "_J" in arrangement or "_L" in arrangement:
-                matches['C'] = Cube._solve_configuration(heuristics_C, candidate, faces, pieces, current_solved, centerpiece)
-            else:
-                raise Exception("Unimplemented arrangement error")
+                    raise Exception("Unimplemented arrangement error")
+
+                # Find winning rotation
+                for k, configuration in matches.items():
+                    for item in configuration:
+                        if best is None:
+                            best = item
+                        else:
+                            # Should instead sort by best matches
+                            if item['set'] >= best['set'] and item['steps'] <= best['steps']:
+                                best = item
+            if best is None:
+                raise Exception("No valid solve configurations found")
+
+            # Apply best rotation for next candidate
+            final_rotations += best['heuristic']
+            for command in best['heuristic']:
+                # Perform in-place rotation within face
+                faces[command.upper()].rotate(pieces, command)
+
+            # Apply changes made to faces
+            for i in range(0, CUBE_FACES):
+                # Obtain centerpiece, edges, and corners
+                faces(i).center = CubeArrangement.get_face_pieces(pieces, i, PieceType.CENTER)[0]
+                faces(i).edges = CubeArrangement.get_face_pieces(pieces, i, PieceType.EDGE)
+                faces(i).corners = CubeArrangement.get_face_pieces(pieces, i, PieceType.CORNER)
+
+            # If we've solved the cube, don't continue
+            remaining_iterations -= 1
+            if list(filter(lambda v: v.value == centerpiece and v.arrangement.piece_type == 'EDGE', pieces[45:53])).__len__() == 4 or remaining_iterations <= 0:
+                unsolved_pieces = False
 
         # Visually test solutions
-        import pprint
-        pprint.pprint(matches)
-        original = "".join([f.value for f in self._pieces])
+        # import pprint
+        # pprint.pprint(matches)
         new_cube = "".join([f.value for f in pieces])
-        print(f'original \t{original}')
+        # print(f'original \t{original}')
         print(f'new \t{new_cube}')
-        if original != new_cube:
-            raise Exception("Cube not returned to default")
+        # if original != new_cube:
+        #     raise Exception("Cube not returned to default")
 
-        # Find winning rotation
-        best = None
-        for k, configuration in matches.items():
-            for item in configuration:
-                if best is None:
-                    best = item
-                else:
-                    # Should instead sort by best matches
-                    if item['set'] >= best['set'] and item['steps'] <= best['steps']:
-                        best = item
-        return best['heuristic']
+        # Return final rotation
+        print(final_rotations)
+        return final_rotations
 
     @staticmethod
     def _solve_configuration(heuristics, candidate, faces, pieces, current_set, centerpiece, adjustment_rotations=['']):
@@ -567,7 +596,6 @@ class Cube:
 
                     # Perform in-place rotation within face
                     faces[translated_heuristic.upper()].rotate(pieces, translated_heuristic)
-                print(new_heuristic)
 
                 # Add to a match object to determine viability
                 new_set = list(filter(lambda v: v.value == centerpiece and v.arrangement.piece_type == 'EDGE', pieces[45:53])).__len__()
