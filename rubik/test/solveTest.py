@@ -369,6 +369,22 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
 
+    def test_solve_046_ShouldSolveBottomCrossWithComplexSolution(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '004104055235214354211124052241030351421342533410352503',
+        }
+        expected = {
+            'status': 'ok',
+            'rotations': 'FdLfDrbDlfDr'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        rotations = result.get('rotations', None)
+        self.assertEqual(expected['rotations'], rotations)
+
     # --------------------------------------------------------
     # SAD PATH TESTS
     # --------------------------------------------------------
@@ -448,6 +464,38 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'error: the cube parameter is missing'
+        }
+
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+
+    def test_solve_930_ShouldReturnErrorOnUnsolveableCube(self):
+        parm = {
+            'op'    : 'solve',
+            'cube': '004104015235214354211124052241030351421342533450352503'
+        }
+        expected = {
+            'status': 'error: no valid solve configurations found - check that the cube has not been tampered with'
+        }
+
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+
+    def test_solve_931_ShouldReturnErrorOnUnsolveableCube(self):
+        parm = {
+            'op'    : 'solve',
+            'cube': '221401454420213345423520101503330531043545530212451012'
+        }
+        expected = {
+            'status': 'error: no valid solve configurations found - check that the cube has not been tampered with'
         }
 
         result = solve._solve(parm)
