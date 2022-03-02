@@ -316,15 +316,19 @@ class SolveTest(unittest.TestCase):
 
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
-        
-    def test_solve_043_ShouldSolveComplexLastCrossPiece(self):
+
+    # --------------------------------------------------------
+    # MULTI-MOVE SOLUTIONS
+    # --------------------------------------------------------
+
+    def test_solve_043_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
-            'cube'  : '334002333032410411312322205415134055104444221050255155',
+            'cube'  : '440502105425110222255123152041431410301045023533453334',
         }
         expected = {
             'status': 'ok',
-            'rotations': 'LdB'
+            'rotations': 'LRRBDlR'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -332,7 +336,6 @@ class SolveTest(unittest.TestCase):
 
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
-
 
     # --------------------------------------------------------
     # SAD PATH TESTS
