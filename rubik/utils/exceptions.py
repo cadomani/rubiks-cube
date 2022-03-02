@@ -63,6 +63,11 @@ class InvalidCubeCorner(InvalidCubeConfiguration):
         super().__init__(f'the cube does not contain a valid arrangement of corner pieces', problem_cube)
 
 
+class TamperedCube(InvalidCubeConfiguration):
+    def __init__(self, problem_cube):
+        super().__init__(f'check that the cube has not been tampered with', problem_cube)
+
+
 class SolveError(BaseException):
     """ Base exception for the cube solve operation. """
     def __init__(self, error, problem_cube, rotate_command):

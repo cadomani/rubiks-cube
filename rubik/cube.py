@@ -671,9 +671,9 @@ class Cube:
                         faces[command.upper()].rotate(pieces, command)
                     CubeHeuristics.update_simulated_pieces(faces, pieces)
 
-            # Break if no solution was found. This indicates algorithmic coverage is lacking.
+            # Break if no solution was found. This may indicate algorithmic coverage is lacking or a tampered cube
             if best is None:
-                raise Exception("No valid solve configurations found")
+                raise Exception("no valid solve configurations found - check algorithmic coverage for these parameters")
 
             # Apply the best rotation for next candidate
             for command in best['heuristic']:
@@ -685,8 +685,10 @@ class Cube:
             # If we've solved the cube, don't continue
             final_rotations += best['heuristic']
             remaining_iterations -= 1
-            if heuristic.get_pieces_solved(faces, pieces) == 4 or remaining_iterations <= 0:
+            if heuristic.get_pieces_solved(faces, pieces) == 4:
                 unsolved_pieces = False
+            elif remaining_iterations <= 0:
+                raise TamperedCube(self)
 
         # Visually verify solutions
         new_cube = "".join([f.value for f in pieces])
