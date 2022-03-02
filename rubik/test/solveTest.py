@@ -385,6 +385,27 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
 
+    def test_solve_050_ShouldSolveBottomCrossFutureInvalidArrangement(self):
+        """ This cube has an arrangement of pieces that is invalid, and has been tampered with, however,
+            the cross is still solveable, and for the purposes of this assignment, that is all that is needed.
+            In future iterations, this test will convert to a sad test once we have enough information to detect
+            a tampered cube
+        """
+        parm = {
+            'op'  : 'solve',
+            'cube': '004104015235214354211124052241030351421342533450352503',
+        }
+        expected = {
+            'status'   : 'ok',
+            'rotations': 'RdFrDblDf'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        rotations = result.get('rotations', None)
+        self.assertEqual(expected['rotations'], rotations)
+
     # --------------------------------------------------------
     # SAD PATH TESTS
     # --------------------------------------------------------
