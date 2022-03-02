@@ -337,6 +337,22 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('rotations', None)
         self.assertEqual(expected['rotations'], rotations)
 
+    def test_solve_044_ShouldSolveBottomCross(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '105302150312115455333021045054432325444140232221453001',
+        }
+        expected = {
+            'status': 'ok',
+            'rotations': 'bLfrdb'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        rotations = result.get('rotations', None)
+        self.assertEqual(expected['rotations'], rotations)
+
     # --------------------------------------------------------
     # SAD PATH TESTS
     # --------------------------------------------------------
