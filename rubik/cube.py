@@ -490,7 +490,7 @@ class Cube:
         heuristics_B1 = ['FF', 'DFF', 'DDFF', 'dFF']
 
         # Heuristics B2 (top-center inner edge)
-        #   Adjustment rotations: (0 -> 3) Rotate bottom D, DD, d, or None, then choose strategy 1 and either 2 or 3 for coverage
+        #   Adjustment rotations: True, then choose strategy 1 and either 2 or 3 for coverage
         #   1. Direct drop: when we don't yet have three the rest of the cross, most efficient but doesn't work on last iteration.
         #      From left:     fL
         #      From right:    Fr
@@ -502,6 +502,11 @@ class Cube:
         heuristics_B2_ad = ['FDr', 'fdL']
         heuristics_B2_hy = ['fLF', 'Frf']
         heuristics_B2 = [*heuristics_B2_dd, *heuristics_B2_hy]
+
+        # Heuristics C (bottom-center inner edge)
+        #   Adjustment rotations: False
+        #   1. Logically, the piece is already above where it should be placed, a rotation step solves this piece
+        heuristics_C = ['fDr', 'FdL']
 
         # Parse through candidates to find best match
         for candidate in candidates:
@@ -517,7 +522,7 @@ class Cube:
                 else:
                     matches['B'] = Cube._solve_configuration(heuristics_B2, candidate, faces, pieces, current_solved, centerpiece, adjustment_rotations)
             elif "_C" in arrangement or "_G" in arrangement or "_J" in arrangement or "_L" in arrangement:
-                print("C syle arrangement")
+                matches['C'] = Cube._solve_configuration(heuristics_C, candidate, faces, pieces, current_solved, centerpiece)
             else:
                 print("Unhandled arrangement error")
                 return None
@@ -545,7 +550,7 @@ class Cube:
         return best['heuristic']
 
     @staticmethod
-    def _solve_configuration(heuristics, candidate, faces, pieces, current_set, centerpiece, adjustment_rotations=''):
+    def _solve_configuration(heuristics, candidate, faces, pieces, current_set, centerpiece, adjustment_rotations=['']):
         # Try heuristics, log and undo
         matches = []
         for heuristic in heuristics:
