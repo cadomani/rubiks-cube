@@ -144,3 +144,4 @@ node_modules
 !**/.yarn/plugins
 !**/.yarn/sdks
 !**/.yarn/versions
+/a3AcceptanceTest.py
