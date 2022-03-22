@@ -510,3 +510,21 @@ class SolveTest(unittest.TestCase):
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
 
+    def test_solve_940_ShouldReturnProperlyFormattedErrorString(self):
+        """ This test case was derived upon review to address a formatting issue causing failed tests. Matches a3_930. """
+        parm = {
+            'op'    : 'solve',
+            'cube': 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwwe',
+            'rotate': 'F'
+        }
+        expected = {
+            'status': 'error: exception caused by invalid cube configuration'
+        }
+
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+
