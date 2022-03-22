@@ -33,5 +33,5 @@ def _solve(parms):
         return {"status": str(e)}
     except Exception as e:
         # Catch all other exceptions not handled above
-        return {"status": f"error: an exception occurred - {str(e)}"}
+        return {"status": f"error: exception caused by invalid cube configuration"}
     return {"status": "ok", "cube": str(cube)}
