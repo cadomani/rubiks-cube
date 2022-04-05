@@ -638,7 +638,13 @@ class Cube:
         # Test for non-unique centerpieces
         if self._pinned_centerpieces.__len__() != CUBE_FACES:
             raise InvalidCubeCenter(self)
-        self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
+        
+        # Handle error case where invalid centers would trigger a KeyError on previous assignments
+        try:
+            self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
+        except KeyError:
+            raise InvalidCubeCenter(self)
+
 
     def _add_piece(self, piece: CubePiece):
         # Check boundary conditions before adding piece
