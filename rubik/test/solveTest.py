@@ -545,7 +545,7 @@ class SolveTest(unittest.TestCase):
             'rotate': 'F'
         }
         expected = {
-            'status': 'error: exception caused by invalid cube configuration'
+            'status': 'error: invalid cube configuration - the cube does not contain six unique center pieces'
         }
 
         result = solve._solve(parm)
