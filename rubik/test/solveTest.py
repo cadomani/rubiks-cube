@@ -384,6 +384,24 @@ class SolveTest(unittest.TestCase):
 
         solution = result.get('solution', None)
         self.assertEqual(expected['solution'], solution)
+        
+        
+    def test_solve_046_ShouldSolveBottomCrossMissedFromA4Grade(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : 'CggCggCggzrrzrrzrrgCCgCCgCCzzrzzrzzrL333L3L333LLL3L3LL',
+        }
+        expected = {
+            'status': 'ok',
+            'solution': 'FFRRBBLL'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)  
+
 
     def test_solve_050_ShouldSolveBottomCrossFutureInvalidArrangement(self):
         """ This cube has an arrangement of pieces that is invalid, and has been tampered with, however,
