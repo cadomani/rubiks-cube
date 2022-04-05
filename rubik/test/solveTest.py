@@ -492,7 +492,7 @@ class SolveTest(unittest.TestCase):
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
 
-    @unittest.skip('Skipping temporarily since this test cannot be accurately detected with the current code changes')
+    # @unittest.skip('Skipping temporarily since this test cannot be accurately detected with the current code changes')
     def test_solve_931_ShouldReturnErrorOnUnsolveableCube(self):
         parm = {
             'op'    : 'solve',
