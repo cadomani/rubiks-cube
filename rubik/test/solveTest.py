@@ -387,7 +387,7 @@ class SolveTest(unittest.TestCase):
         solution = result.get('solution', None)
         self.assertEqual(expected['solution'], solution)
         
-    @unittest.skip('Test still fails with the one provided in class. Focus on the other test first.')
+    # @unittest.skip('Test still fails with the one provided in class. Focus on the other test first.')
     def test_solve_046_ShouldSolveBottomCrossMissedFromA4Grade(self):
         parm = {
             'op'    : 'solve',
@@ -492,7 +492,6 @@ class SolveTest(unittest.TestCase):
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
 
-    # @unittest.skip('Skipping temporarily since this test cannot be accurately detected with the current code changes')
     def test_solve_931_ShouldReturnErrorOnUnsolveableCube(self):
         parm = {
             'op'    : 'solve',
