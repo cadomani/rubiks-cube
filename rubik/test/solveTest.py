@@ -24,14 +24,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations'  : '',
+            'solution'  : '',
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_011_ShouldReturnFrontRotation(self):
         parm = {
@@ -276,14 +276,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'r'
+            'solution': 'r'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
         
     def test_solve_041_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
@@ -292,14 +292,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'R'
+            'solution': 'R'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_042_ShouldSolveComplexLastCrossPiece(self):
         parm = {
@@ -308,14 +308,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'Rbr'
+            'solution': 'Rbr'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     # --------------------------------------------------------
     # MULTI-MOVE SOLUTIONS
@@ -328,14 +328,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'LbRDlR'
+            'solution': 'LbRDlR'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_044_ShouldSolveBottomCross(self):
         parm = {
@@ -344,14 +344,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'bLfrdb'
+            'solution': 'bLfrdb'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_045_ShouldSolveBottomCross(self):
         parm = {
@@ -360,14 +360,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'LRdL'
+            'solution': 'LRdL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_046_ShouldSolveBottomCrossWithComplexSolution(self):
         parm = {
@@ -376,14 +376,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'rotations': 'FdLfDrbDlfDr'
+            'solution': 'FdLfDrbDlfDr'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     def test_solve_050_ShouldSolveBottomCrossFutureInvalidArrangement(self):
         """ This cube has an arrangement of pieces that is invalid, and has been tampered with, however,
@@ -397,14 +397,14 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status'   : 'ok',
-            'rotations': 'RdFrDblDf'
+            'solution': 'RdFrDblDf'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        rotations = result.get('rotations', None)
-        self.assertEqual(expected['rotations'], rotations)
+        solution = result.get('solution', None)
+        self.assertEqual(expected['solution'], solution)
 
     # --------------------------------------------------------
     # SAD PATH TESTS
