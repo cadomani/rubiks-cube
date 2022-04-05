@@ -31,7 +31,7 @@ def _solve(parms):
             cube.rotate(rotate_command)
     except (SolveError, CubeError) as e:
         return {"status": str(e)}
-    except Exception as e:
-        # Catch all other exceptions not handled above
-        return {"status": f"error: exception caused by invalid cube configuration"}
+    # except Exception as e:
+    #     # Catch all other exceptions not handled above
+    #     return {"status": f"error: exception caused by invalid cube configuration"}
     return {"status": "ok", "cube": str(cube)}

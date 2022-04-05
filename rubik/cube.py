@@ -115,7 +115,7 @@ class CubeArrangement(Enum):
         )
 
     @staticmethod
-    def get_face_pieces(pieces, face: int, piece_type: PieceType):
+    def get_face_pieces(pieces, face: int, piece_type: PieceType, cube_string: str = None):
         """ Return all the valid edges or corners for this face. """
         pieces = list(
             filter(
@@ -123,7 +123,14 @@ class CubeArrangement(Enum):
                 pieces
             )
         )
-        return sorted(pieces, key=lambda v: v.rm_index)
+        semifinal = sorted(pieces, key=lambda v: v.rm_index)
+        # if cube_string is not None:
+        #     for piece in semifinal:
+        #         if len(piece.arrangement.value.items) == 0:
+        #             for x, adjacency in enumerate(piece.arrangement.adjacencies):
+        #                 piece.arrangement.value.items.append(int(cube_string[piece.arrangement.true_indexes[x]]))
+
+        return semifinal
 
 
 @dataclass
@@ -139,7 +146,7 @@ class HeuristicsProperties:
 
 
 class CubeHeuristics(Enum):
-    BottomCross = HeuristicsProperties(
+    BottomCrossBak = HeuristicsProperties(
         order=0,
         pieces_to_set=4,
         heuristics={
@@ -193,6 +200,48 @@ class CubeHeuristics(Enum):
         }
     )
 
+    BottomCross = HeuristicsProperties(
+        order=0,
+        pieces_to_set=4,
+        heuristics={
+            '2' : ['FF', 'ULfl'],
+            '4': ['f', 'luLFF'],
+            '6': ['F', 'RUrFF'],
+            '8' : ['', 'FluLFF'],
+            'R' : ['F', 'RUrFF'],
+            'RR' : ['F', 'RUrFF'],
+            'r' : ['F', 'RUrFF'],
+            'L' : ['f', 'luLFF'],
+            'LL' : ['f', 'lulFF'],
+            'l' : ['f', 'luFF'],
+            'U': ['FF', 'ULfl'],
+            'UU': ['FF', 'ULfl'],
+            'u': ['FF', 'ULfl'],
+            'B': ['BBUUFF', 'BlUFF']
+        },
+        adjustment_rotations=[],
+        adjustment_exclusion=[],
+        arrangement_heuristic={
+            'R' : 'BEFG',
+            'L': 'DIKL',
+            'U': 'AEHK',
+            'F' : 'ABCD',
+            'B': 'J'
+        },
+        arrangement_targets={
+            '#': PieceType.EDGE,
+            'A' : PieceType.EDGE,
+            'B': PieceType.EDGE,
+            'C' : PieceType.EDGE
+        },
+        heuristic_strength={
+            '#' : 1,
+            'A': 0,
+            'B' : 0,
+            'C': 0
+        }
+    )
+
     @classmethod
     def get_phase_list(cls, up_to=10):
         phase_list = []
@@ -232,6 +281,26 @@ class CubeHeuristics(Enum):
             raise Exception("Unimplemented arrangement error")
         return self.translate_heuristics(naive_heuristics, candidate.index // CUBE_FACE_PIECES, adjustment_rotations)
 
+    def get_algorithm_by_arrangement(self, candidate):
+        # Determine arrangement type for this piece
+        arrangement = candidate.arrangement.name
+        naive_heuristics = None
+        home_target = -1
+
+        # The heuristic we will try
+        if self.name == "BottomCross":
+            # Set home target for piece algorithm adjustment
+            home_target = 2
+
+            # If the piece is already on the front of the cube, perform adjustment moves to correct
+            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['F']):
+                print(candidate)
+
+            # The piece we are targeting and the algorithm to try
+            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['R']):
+                naive_heuristics = self.value.heuristics['R']
+
+
     @staticmethod
     def translate_heuristics(heuristics, face, adjustment_rotations):
         transformed_heuristics = []
@@ -246,10 +315,11 @@ class CubeHeuristics(Enum):
                         translated_heuristic = translated_heuristic.lower()
                     new_heuristic += translated_heuristic
                 transformed_heuristics.append(new_heuristic)
+            print(f"{heuristic=}")
         return transformed_heuristics
 
     @staticmethod
-    def update_simulated_pieces(faces, pieces):
+    def update_simulated_pieces(faces, pieces, cube_string: str = None):
         # Undo changes made to faces
         for i in range(0, CUBE_FACES):
             # Obtain centerpiece, edges, and corners
@@ -608,8 +678,6 @@ class Cube:
 
     def solve(self, cube_phase=10):
         # Target a specific solve step or a series of steps
-        # phase_list = CubeHeuristics.get_phase_list(0)
-        # heuristic: HeuristicsProperties = phase_list[-1].value if cube_phase >= len(phase_list) else phase_list[cube_phase].value
         heuristic = CubeHeuristics.BottomCross
 
         # Check if we qualify for a bottom cross
@@ -631,8 +699,9 @@ class Cube:
 
         # Run for as many pieces as we have to set, leave headroom to catch errors
         final_rotations = ''
-        remaining_iterations = 10
+        remaining_iterations = 80
         unsolved_pieces = True
+        claws = 4
         while unsolved_pieces:
             # Identify candidates
             current_solved = heuristic.get_pieces_solved(faces, pieces)
@@ -641,52 +710,87 @@ class Cube:
             # Parse through candidates to find best match
             best = {
                 "heuristic": '',
-                "steps"    : 100,
                 "set"      : current_solved,
-                "new_cube" : ''
+                "new_cube" : '',
+                "unset_claws": 4,
+                "unset_pieces": 4,
+                "transformations": 20,
+                "score": 8
             }
+            the_best = []
+            print('first try:')
             for candidate in candidates:
                 # Save current arrangement for easy lookups
-                heuristic_algorithms = heuristic.get_heuristic_by_arrangement(candidate)
+                heuristic_algorithms = heuristic.get_algorithm_by_arrangement(candidate)
 
                 # Find potential solutions
                 for heuristic_algorithm in heuristic_algorithms:
                     # Rotate face
                     for command in heuristic_algorithm:
                         faces[command.upper()].rotate(pieces, command)
-
+                    # print(("".join([f.value for f in pieces])))
+                    # print('\n\n')
                     # Add to a match object to determine viability
-                    new_set = heuristic.get_pieces_solved(faces, pieces)
-                    new_steps = len(heuristic_algorithm)
-                    if best['set'] < new_set or (new_steps < best['steps'] and best['set'] <= new_set):
+                    unset_pieces = 4 - heuristic.get_pieces_solved(faces, pieces)
+                    # if unset_pieces == 4:
+                    #     continue
+                    transformations = len(heuristic_algorithm)
+                    new_cube = "".join([f.value for f in pieces])
+
+                    unset_claws = 4
+                    for edge_piece in faces.D.edges:
+                        vals = []
+                        for e in edge_piece.arrangement.true_indexes:
+                            vals.append(new_cube[e])
+                        vals_other = list(map(lambda x: str(x), edge_piece.arrangement.adjacencies))
+                        # if len({*vals, *vals_other}) == len(vals):
+                        if vals == vals_other:
+                            # print("Matched claw")
+                            unset_claws -= 1
+
+                    new_score = unset_claws + unset_pieces
+                    if new_score < best['score']:  # and unset_claws == unset_pieces
                         best = {
                             "heuristic": heuristic_algorithm,
-                            "steps"    : new_steps,
-                            "set"      : new_set,
-                            "new_cube" : "".join([f.value for f in pieces])
+                            "new_cube" : "".join([f.value for f in pieces]),
+                            "unset_claws"    : unset_claws,
+                            "unset_pieces"   : unset_pieces,
+                            "transformations": transformations,
+                            "score"          : new_score,
                         }
+                        the_best.append(best)
 
                     # Undo operations by reversing heuristic steps and applying the inverse
                     for command in reversed(heuristic_algorithm.swapcase()):
                         faces[command.upper()].rotate(pieces, command)
+                    # print(f'undone={("".join([f.value for f in pieces]))}')
                     CubeHeuristics.update_simulated_pieces(faces, pieces)
-
+                    # print(f'updated={("".join([f.value for f in pieces]))}\n')
+            continue
             # Break if no solution was found. This may indicate algorithmic coverage is lacking or a tampered cube
             if best is None:
                 raise Exception("no valid solve configurations found - check algorithmic coverage for these parameters")
 
             # Apply the best rotation for next candidate
-            for command in best['heuristic']:
+            final_selection = the_best[-1]
+            # if final_selection['unset_claws'] == claws:
+            #     continue
+            claws = final_selection['unset_claws']
+            print(f"{claws=}")
+            for command in final_selection['heuristic']:
                 faces[command.upper()].rotate(pieces, command)
+                # print("".join([f.value for f in pieces]))
 
             # Apply changes made to faces
             CubeHeuristics.update_simulated_pieces(faces, pieces)
+            print('\n')
 
             # If we've solved the cube, don't continue
-            final_rotations += best['heuristic']
+            final_rotations += final_selection['heuristic']
             remaining_iterations -= 1
             if heuristic.get_pieces_solved(faces, pieces) == 4:
                 unsolved_pieces = False
+                print('\n\n')
             elif remaining_iterations <= 0:
                 raise TamperedCube(self)
 
@@ -708,3 +812,4 @@ class Cube:
 
     def __repr__(self):
         return f'{self._cube_string}\n{self._cube_map}'
+
