@@ -269,7 +269,7 @@ class SolveTest(unittest.TestCase):
     # SINGLE MOVE SOLUTIONS
     # --------------------------------------------------------
     
-    # @unittest.skip('Skipping temporarily to patch and test an easier issue')
+
     def test_solve_040_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
@@ -286,7 +286,7 @@ class SolveTest(unittest.TestCase):
         solution = result.get('solution', None)
         self.assertEqual(expected['solution'], solution)
 
-    @unittest.skip('Skipping since old tests should be verified first to ensure behavior isnt broken under new system')
+
     def test_solve_041_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
