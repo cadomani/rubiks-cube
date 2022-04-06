@@ -1,4 +1,3 @@
-import copy
 from dataclasses import dataclass
 import re
 from enum import Enum, unique
@@ -133,87 +132,47 @@ class HeuristicsProperties:
     heuristics: dict
     adjustment_rotations: list
     adjustment_exclusion: list
+    translation_parameters: dict
     arrangement_heuristic: dict
-    arrangement_targets: dict
+    success_metric: list
     heuristic_strength: dict
 
 
 class CubeHeuristics(Enum):
-    BottomCrossBak = HeuristicsProperties(
-        order=0,
-        pieces_to_set=4,
-        heuristics={
-            # Heuristics A (center-right inner edge, or alternate adjacent piece)
-            #   Adjustment rotations: True
-            #   1. Rotate towards bottom depending on direction
-            'A' : ['r', 'L'],
-
-            # Heuristics B1 (top-center outer edge)
-            #   Adjustment rotations: False
-            #   1. Simple translation rotation from top to bottom
-            'B1': ['FF'],
-
-            # Heuristics B2 (top-center inner edge)
-            #   Adjustment rotations: True, then choose strategy 1 and either 2 or 3 for coverage
-            #   1. Direct drop: when we don't yet have three the rest of the cross, most efficient but doesn't work on last iteration.
-            #      From left:     fL
-            #      From right:    Fr
-            #   2. Adjustment drop: most efficient on last iteration, rotates empty row but requires counter-rotation to set
-            #      From left:     fdL
-            #      From right:    FDr
-            #   3. Hybrid: Combines direct drop with a counter rotation to replace unset piece
-            #      From left:     fLF
-            #      From right:    Frf
-            'B2': ['Fr', 'fL', 'fLF', 'Frf'],
-
-            # Heuristics C (bottom-center inner edge)
-            #   Adjustment rotations: False
-            #   1. Logically, the piece is already above where it should be placed, a rotation step solves this piece
-            'C' : ['fDr', 'FdL']
-        },
-        adjustment_rotations=['', 'D', 'DD', 'd'],
-        adjustment_exclusion=['C'],
-        arrangement_heuristic={
-            'A' : 'BFID',
-            'B1': 'AEHK',
-            'B2': 'AEHK',
-            'C' : 'CGJL'
-        },
-        arrangement_targets={
-            'A' : PieceType.EDGE,
-            'B1': PieceType.EDGE,
-            'B2': PieceType.EDGE,
-            'C' : PieceType.EDGE
-        },
-        heuristic_strength={
-            'A' : 0,
-            'B1': 2,
-            'B2': 3,
-            'C' : 1
-        }
-    )
-
     BottomCross = HeuristicsProperties(
         order=0,
         pieces_to_set=4,
         heuristics={
-            '2' : ['FF', 'ULfl'],
-            '4': ['f', 'luLFF'],
-            '6': ['F', 'RUrFF'],
-            '8' : ['', 'FluLFF'],
-            'R' : ['F', 'RUrFF'],
-            'RR' : ['F', 'RUrFF'],
-            'r' : ['F', 'RUrFF'],
-            'L' : ['f', 'luLFF'],
-            'LL' : ['f', 'lulFF'],
-            'l' : ['f', 'luFF'],
-            'U': ['FF', 'ULfl'],
-            'UU': ['FF', 'ULfl'],
-            'u': ['FF', 'ULfl'],
-            'B': ['BBUUFF', 'BlUFF']
+            'F' : [
+                ['', 'FF', 'F', 'f'],
+                ['ULfl', 'luLFF', 'RUrFF', 'FluLFF']
+            ],
+            'R': [
+                ['RF', 'RRF', 'rF'],
+                ['RUFF', 'RRUFF', 'rUFF']
+            ],
+            'L': [
+                ['Lf', 'LLf', 'lf'],
+                ['luLFF', 'lulFF', 'luFF']
+            ],
+            'U' : [
+                ['UUFF'],
+                ['UrF']
+            ],
+            'B': [
+                ['BBUUFF'],
+                ['BlUFF']
+            ]
         },
         adjustment_rotations=[],
         adjustment_exclusion=[],
+        translation_parameters={
+            'F': lambda face, v: face != (0 + v) % 4,
+            'R': lambda face, v: face == (1 + v) % 4,
+            'L': lambda face, v: face == (3 + v) % 4,
+            'U': lambda face, _: face == 4,
+            'B': lambda face, _: face == 5
+        },
         arrangement_heuristic={
             'R' : ['EFG', 'HIJ', 'KDL', 'ABC'],
             'L': ['IKL', 'ADC', 'EBG', 'HFJ'],
@@ -221,17 +180,55 @@ class CubeHeuristics(Enum):
             'F' : ['ABCD', 'BEFG', 'FHIJ', 'DIKL'],
             'B': ['J', 'L', 'C', 'B']
         },
-        arrangement_targets={
-            '#': PieceType.EDGE,
-            'A' : PieceType.EDGE,
-            'B': PieceType.EDGE,
-            'C' : PieceType.EDGE
-        },
+        success_metric=[CubeArrangement.EDGE_C, CubeArrangement.EDGE_G, CubeArrangement.EDGE_J, CubeArrangement.EDGE_L],
         heuristic_strength={
-            '#' : 1,
-            'A': 0,
-            'B' : 0,
-            'C': 0
+            '0' : 1,
+            '1': 0,
+            '2' : 0,
+            '3': 0
+        }
+    )
+    LowerLayer = HeuristicsProperties(
+        order=1,
+        pieces_to_set=4,
+        heuristics={
+            'F': [
+                ['', 'FF', 'F', 'f'],
+                ['ULfl', 'luLFF', 'RUrFF', 'FluLFF']
+            ],
+            'R': [
+                ['RF', 'RRF', 'rF'],
+                ['RUFF', 'RRUFF', 'rUFF']
+            ],
+            'L': [
+                ['Lf', 'LLf', 'lf'],
+                ['luLFF', 'lulFF', 'luFF']
+            ],
+            'U': [
+                ['UUFF'],
+                ['UrF']
+            ],
+            'B': [
+                ['BBUUFF'],
+                ['BlUFF']
+            ]
+        },
+        adjustment_rotations=[],
+        adjustment_exclusion=[],
+        translation_parameters={},
+        arrangement_heuristic={
+            'R': ['EFG', 'HIJ', 'KDL', 'ABC'],
+            'L': ['IKL', 'ADC', 'EBG', 'HFJ'],
+            'U': ['H', 'K', 'A', 'E'],
+            'F': ['ABCD', 'BEFG', 'FHIJ', 'DIKL'],
+            'B': ['J', 'L', 'C', 'B']
+        },
+        success_metric=[],
+        heuristic_strength={
+            '0': 1,
+            '1': 0,
+            '2': 0,
+            '3': 0
         }
     )
 
@@ -277,39 +274,18 @@ class CubeHeuristics(Enum):
     def get_algorithm_by_arrangement(self, candidate, target):
         # Determine arrangement type for this piece
         arrangement = candidate.arrangement.name
-        success_metric = [CubeArrangement.EDGE_C, CubeArrangement.EDGE_G, CubeArrangement.EDGE_J, CubeArrangement.EDGE_L]
 
         # The heuristic we will try
         if self.name == "BottomCross":
             # If the piece is already on the front of the cube, perform adjustment moves to correct
-            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['F'][target]):
-                if candidate.current_face != (0 + target) % 4:
-                    return CubeHeuristics.translate_heuristics(['', 'FF', 'F', 'f'], target, ['']), success_metric[target]
-                return CubeHeuristics.translate_heuristics(['ULfl', 'luLFF', 'RUrFF', 'FluLFF'], target, ['']), success_metric[target]
-
-            # The piece we are targeting and the algorithm to try
-            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['R'][target]):
-                if candidate.current_face == (1 + target) % 4:
-                    return CubeHeuristics.translate_heuristics(['RF', 'RRF', 'rF'], target, ['']), success_metric[target]
-                return CubeHeuristics.translate_heuristics(['RUFF', 'RRUFF', 'rUFF'], target, ['']), success_metric[target]
-
-            # The piece we are targeting and the algorithm to try
-            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['L'][target]):
-                if candidate.current_face == (3 + target) % 4:
-                    return CubeHeuristics.translate_heuristics(['Lf', 'LLf', 'lf'], target, ['']), success_metric[target]
-                return CubeHeuristics.translate_heuristics(['luLFF', 'lulFF', 'luFF'], target, ['']), success_metric[target]
-
-            # The piece we are targeting and the algorithm to try
-            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['U'][target]):
-                if candidate.current_face == 4:
-                    return CubeHeuristics.translate_heuristics(['UUF'], target, ['']), success_metric[target]
-                return CubeHeuristics.translate_heuristics(['UrF'], target, ['']), success_metric[target]
-
-            # The piece we are targeting and the algorithm to try
-            if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic['B'][target]):
-                if candidate.current_face == 5:
-                    return CubeHeuristics.translate_heuristics(['BBUUFF'], target, ['']), success_metric[target]
-                return CubeHeuristics.translate_heuristics(['BlUFF'], target, ['']), success_metric[target]
+            for face in self.value.arrangement_heuristic:
+                if any(f'EDGE_{point}' in arrangement for point in self.value.arrangement_heuristic[face][target]):
+                    alt = self.value.translation_parameters[face](candidate.current_face, target)
+                    return CubeHeuristics.translate_heuristics(
+                        self.value.heuristics[face][0 if alt else 1],
+                        target,
+                        ['']
+                    ), self.value.success_metric[target]
 
     @staticmethod
     def translate_heuristics(heuristics, face, adjustment_rotations):
@@ -346,7 +322,6 @@ class CubeHeuristics(Enum):
             ).__len__()
 
     def get_candidates(self, faces, pieces):
-        candidates = []
         if self.name == 'BottomCross':
             centerpiece = faces.D.center.value
             possibilities = CubeArrangement.get_cohesive_pieces(pieces, centerpiece, PieceType.EDGE)
@@ -700,7 +675,6 @@ class Cube:
         final_rotations = ''
         remaining_iterations = 3
         unsolved_pieces = True
-        current_solved = heuristic.get_pieces_solved(self._faces, self._pieces)
 
         while unsolved_pieces:
             # Parse through candidates to find best match
@@ -724,9 +698,9 @@ class Cube:
                         self._faces[command.upper()].rotate(self._pieces, command)
                         tentative = ("".join([f.value for f in self._pieces]))
                         self._state.append(tentative)
+                    self._reconstruct()
 
                     # Check for success by comparing block against success condition
-                    self._reconstruct()
                     if list(success_condition.adjacencies) == [self._cube_map[piece] for piece in success_condition.true_indexes]:
                         final_rotations += heuristic_algorithm
                         print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
@@ -765,4 +739,3 @@ class Cube:
 
     def __repr__(self):
         return f'{self._cube_string}\n{self._cube_map}'
-
