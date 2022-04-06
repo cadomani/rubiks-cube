@@ -656,7 +656,7 @@ class Cube:
 
     def solve(self, cube_phase=10):
         # Target a specific solve step or a series of steps
-        heuristic = CubeHeuristics.BottomCross
+        heuristic_phases = [CubeHeuristics.BottomCross]
 
         # Check if we qualify for a bottom cross
         centerpiece = self._faces.D.center
@@ -673,57 +673,59 @@ class Cube:
 
         # Run for as many pieces as we have to set, leave headroom to catch errors
         final_rotations = ''
-        remaining_iterations = 3
-        unsolved_pieces = True
 
-        while unsolved_pieces:
-            # Parse through candidates to find best match
-            for current_face in [0, 1, 2, 3]:
-                # Identify candidates
-                candidates = heuristic.get_candidates(self._faces, self._pieces)
+        for heuristic in heuristic_phases:
+            remaining_iterations = 3
+            unsolved_pieces = True
 
-                # Save current arrangement for easy lookups
-                algorithm = ''
-                success_condition = []
-                for candidate in candidates:
-                    target_face = list(candidate.adjacent_faces.difference(centerpiece.adjacent_faces))[0]
-                    if target_face == current_face:
-                        algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidate, current_face)
-                        break
+            while unsolved_pieces:
+                # Parse through candidates to find best match
+                for current_face in [0, 1, 2, 3]:
+                    # Identify candidates
+                    candidates = heuristic.get_candidates(self._faces, self._pieces)
 
-                # Test potential solutions
-                for heuristic_algorithm in algorithm:
-                    # Rotate face
-                    for command in heuristic_algorithm:
-                        self._faces[command.upper()].rotate(self._pieces, command)
-                        tentative = ("".join([f.value for f in self._pieces]))
-                        self._state.append(tentative)
-                    self._reconstruct()
+                    # Save current arrangement for easy lookups
+                    algorithm = ''
+                    success_condition = []
+                    for candidate in candidates:
+                        target_face = list(candidate.adjacent_faces.difference(centerpiece.adjacent_faces))[0]
+                        if target_face == current_face:
+                            algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidate, current_face)
+                            break
 
-                    # Check for success by comparing block against success condition
-                    if list(success_condition.adjacencies) == [self._cube_map[piece] for piece in success_condition.true_indexes]:
-                        final_rotations += heuristic_algorithm
-                        print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
-                        break
+                    # Test potential solutions
+                    for heuristic_algorithm in algorithm:
+                        # Rotate face
+                        for command in heuristic_algorithm:
+                            self._faces[command.upper()].rotate(self._pieces, command)
+                            tentative = ("".join([f.value for f in self._pieces]))
+                            self._state.append(tentative)
+                        self._reconstruct()
 
-                    # Undo operations by reversing heuristic steps and applying the inverse
-                    for command in reversed(heuristic_algorithm.swapcase()):
-                        self._faces[command.upper()].rotate(self._pieces, command)
-                        self._state.pop()
-                    self._reconstruct()
+                        # Check for success by comparing block against success condition
+                        if list(success_condition.adjacencies) == [self._cube_map[piece] for piece in success_condition.true_indexes]:
+                            final_rotations += heuristic_algorithm
+                            print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
+                            break
 
-            # Check if all pieces have been solved
-            if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
-                unsolved_pieces = False
-            elif remaining_iterations <= 0:
-                raise TamperedCube(self)
-            remaining_iterations -= 1
+                        # Undo operations by reversing heuristic steps and applying the inverse
+                        for command in reversed(heuristic_algorithm.swapcase()):
+                            self._faces[command.upper()].rotate(self._pieces, command)
+                            self._state.pop()
+                        self._reconstruct()
 
-        # Visually verify solutions
-        print(f'\nNew cube: \t\t{self._cube_string}')
+                # Check if all pieces have been solved
+                if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
+                    unsolved_pieces = False
+                elif remaining_iterations <= 0:
+                    raise TamperedCube(self)
+                remaining_iterations -= 1
 
-        # Return final rotation
-        print(f'Rotations: \t\t{final_rotations}\n')
+            # Visually verify solutions
+            print(f'\nNew cube: \t\t{self._cube_string}')
+
+            # Return final rotation
+            print(f'Rotations: \t\t{final_rotations}\n')
         return final_rotations
 
     def _reconstruct(self):
