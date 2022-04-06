@@ -636,7 +636,7 @@ class Cube:
         # Test for non-unique centerpieces
         if self._pinned_centerpieces.__len__() != CUBE_FACES:
             raise InvalidCubeCenter(self)
-        
+
         # Handle error case where invalid centers would trigger a KeyError on previous assignments
         try:
             self._cube_map = [self._pinned_centerpieces[face] for face in self._cube_string]
@@ -684,9 +684,9 @@ class Cube:
         heuristic = CubeHeuristics.BottomCross
 
         # Check if we qualify for a bottom cross
-        centerpiece = self._faces.D.center.value
+        centerpiece = self._faces.D.center
         for edge in self._faces.D.edges:
-            if edge.value != centerpiece:
+            if edge.value != centerpiece.value:
                 break
         else:
             # If we didn't break, all pieces match. No rotations needed
@@ -712,7 +712,7 @@ class Cube:
                 algorithm = ''
                 success_condition = []
                 for candidate in candidates:
-                    target_face = list(candidate.adjacent_faces.difference({int(centerpiece)}))[0]
+                    target_face = list(candidate.adjacent_faces.difference(centerpiece.adjacent_faces))[0]
                     if target_face == current_face:
                         algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidate, current_face)
                         break
@@ -726,16 +726,17 @@ class Cube:
                         self._state.append(tentative)
 
                     # Check for success by comparing block against success condition
-                    if list(success_condition.adjacencies) == [int(self._pieces[piece].value) for piece in success_condition.true_indexes]:
+                    self._reconstruct()
+                    if list(success_condition.adjacencies) == [self._cube_map[piece] for piece in success_condition.true_indexes]:
                         final_rotations += heuristic_algorithm
                         print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
-                        self._reconstruct()
                         break
 
                     # Undo operations by reversing heuristic steps and applying the inverse
                     for command in reversed(heuristic_algorithm.swapcase()):
                         self._faces[command.upper()].rotate(self._pieces, command)
                         self._state.pop()
+                    self._reconstruct()
 
             # Check if all pieces have been solved
             if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
@@ -764,3 +765,4 @@ class Cube:
 
     def __repr__(self):
         return f'{self._cube_string}\n{self._cube_map}'
+
