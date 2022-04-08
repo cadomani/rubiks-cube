@@ -218,7 +218,7 @@ class CubeHeuristics(Enum):
         },
         arrangement_heuristic={
             'LIFT': ['C', 'H', 'G', 'D'],
-            'SET': ['ABEF'],
+            'SET': ['B', 'E', 'F', 'A'],
         },
         success_metric=[
             CubeArrangement.CORNER_C,
@@ -266,14 +266,6 @@ class CubeHeuristics(Enum):
                         ['']
                     ), self.value.success_metric[target]
         elif self.name == "LowerLayer":
-            # With two possible locations for the piece, we need a location map to find the order to switch them into
-            locations = {
-                CubeArrangement.CORNER_A: 3,
-                CubeArrangement.CORNER_B: 0,
-                CubeArrangement.CORNER_E: 1,
-                CubeArrangement.CORNER_F: 2
-            }
-
             # Check if we're below and need adjustments to raise to top, or if we're above
             if candidate.arrangement in self.value.success_metric:
                 # Candidate piece is at the bottom of the cube
@@ -296,7 +288,7 @@ class CubeHeuristics(Enum):
                 return [self.minimize(f"{lift_heur}{rot_heur}{adj_heur[0]}")], self.value.success_metric[target]
             else:
                 # Find out how many spaces we need to rotate the top to line up with the bottom piece
-                rot_heur = "" + "u" * abs(target - locations[candidate.arrangement])
+                rot_heur = "" + "u" * abs(target - self.value.arrangement_heuristic['SET'].index(candidate.arrangement.name.split('_')[1]))
 
                 # Candidate piece is on top of the cube
                 if candidate.current_face == 4:
