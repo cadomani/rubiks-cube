@@ -275,7 +275,6 @@ class CubeHeuristics(Enum):
             }
 
             # Check if we're below and need adjustments to raise to top, or if we're above
-            # test_heur = "" + "U" * abs(target - (candidate_order - 1))
             if candidate.arrangement in self.value.success_metric:
                 # Candidate piece is at the bottom of the cube
                 lift_heur = self.value.heuristics['LIFT'][candidate_order][0]
@@ -284,7 +283,6 @@ class CubeHeuristics(Enum):
                     face = "F"
                 elif candidate.rm_index == 7:
                     face = "R"
-                    # lift_heur = self.value.heuristics['LIFT'][(candidate_order + 3) % 4][0]
                 elif candidate.rm_index == 9:
                     face = 'U'
 
@@ -319,8 +317,16 @@ class CubeHeuristics(Enum):
                     ), self.value.success_metric[target]
 
     @staticmethod
-    def minimize(cube: str):
-        return cube.replace("UUU", "u").replace("FFF", "f").replace("RRR", "r").replace("LLL", "l").replace("BBB", "b").replace("DDD", "d").replace('Uu', '').replace('uU', '').replace("uuu", "U")
+    def minimize(moves: str):
+        letters = ["f", "u", "r", "l", "b", "d"]
+        for letter in letters:
+            inverse_letter = str.swapcase(letter)
+            moves = moves\
+                .replace(letter * 3, inverse_letter)\
+                .replace(inverse_letter * 3, letter)\
+                .replace(letter + inverse_letter, "")\
+                .replace(inverse_letter + letter, "")
+        return moves
 
     def locate_match(self, candidates, current_face, reference_block):
         """ This function is concerned with picking out the component that exactly matches the one we're looking to insert.
