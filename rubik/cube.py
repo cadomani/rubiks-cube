@@ -725,6 +725,15 @@ class Cube:
             self._state.append(self._cube_string)
 
     def solve(self, cube_phase=10):
+        # First step is to check if the cube is already solved, if so, return an empty string
+        last = self._cube_map[0]
+        for new_last in self._cube_map[1:54]:
+            if last > new_last:
+                break
+            last = new_last
+        else:
+            return ""
+        
         # Target a specific solve step or a series of steps
         heuristic_phases = [CubeHeuristics.BottomCross, CubeHeuristics.LowerLayer]
 

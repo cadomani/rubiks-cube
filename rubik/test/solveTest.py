@@ -18,6 +18,7 @@ class SolveTest(unittest.TestCase):
     # --------------------------------------------------------
 
     def test_solve_010_ShouldReturnSolutionOnMissingRotateParameter(self):
+        """ Checking behavior is necessary so this test does not fail. In this case, check that all values are contiguous and serialized. """
         parm = {
             'op'    : 'solve',
             'cube'  : 'bbbbbbbbbrrrrrrrrrgggggggggoooooooooyyyyyyyyywwwwwwwww',
