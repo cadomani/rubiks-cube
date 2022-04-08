@@ -264,9 +264,7 @@ class SolveTest(unittest.TestCase):
         cube = result.get('cube', None)
         self.assertEqual(expected['cube'], cube)
 
-    
-    def test_solve_040_ShouldObtainSimpleSolutionForAlmostSolvedCube(self):
-        """ For the time being, the solution given will be complicated until the program obtains more knowledge about the cube """
+    def test_solve_040_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '005005005111111111422422422333333333440440440552552552',
@@ -282,8 +280,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
         
-    def test_solve_041_ShouldObtainSimpleSolutionForAlmostSolvedCube(self):
-        """ For the time being, the solution given will be complicated until the program obtains more knowledge about the cube """
+    def test_solve_041_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '004004004111111111522522522333333333442442442550550550',
@@ -299,7 +296,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_042_ShouldSolveBottomLayer(self):
+    def test_solve_042_ShouldSolveComplexLastCrossPiece(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '443303302550412532534424421302132022001141100551555413',
@@ -315,7 +312,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_043_ShouldSolveBottomLayer(self):
+    def test_solve_043_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '440502105425110222255123152041431410301045023533453334',
@@ -331,7 +328,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_044_ShouldSolveBottomLayer(self):
+    def test_solve_044_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '105302150312115455333021045054432325444140232221453001',
@@ -347,7 +344,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_045_ShouldSolveBottomLayer(self):
+    def test_solve_045_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '232502120330412143401523505411433315043540424215051052',
@@ -363,7 +360,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_046_ShouldSolveBottomLayer(self):
+    def test_solve_046_ShouldSolveBottomCrossWithComplexSolution(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '004104055235214354211124052241030351421342533410352503',
@@ -379,7 +376,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_047_ShouldSolveBottomLayer(self):
+    def test_solve_047_ShouldSolveBottomCrossWithComplexSolution(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '510400103321113412401224421522330430230441345550555253',
@@ -395,7 +392,7 @@ class SolveTest(unittest.TestCase):
         rotations = result.get('solution', None)
         self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_048_ShouldSolveBottomLayerMissedFromA4Grade(self):
+    def test_solve_048_ShouldSolveBottomCrossMissedFromA4Grade(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'CggCggCggzrrzrrzrrgCCgCCgCCzzrzzrzzrL333L3L333LLL3L3LL',

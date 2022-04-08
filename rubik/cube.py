@@ -174,13 +174,18 @@ class CubeHeuristics(Enum):
             'B': lambda face, _: face == 5
         },
         arrangement_heuristic={
-            'R' : ['EFG', 'HIJ', 'KDL', 'ABC'],
-            'L': ['IKL', 'ADC', 'EBG', 'HFJ'],
-            'U': ['H', 'K', 'A', 'E'],
-            'F' : ['ABCD', 'BEFG', 'FHIJ', 'DIKL'],
-            'B': ['J', 'L', 'C', 'B']
+            'R' : ['EFG',   'HIJ',  'KDL',  'ABC'],
+            'L' : ['IKL',   'ADC',  'EBG',  'HFJ'],
+            'U' : ['H',     'K',    'A',    'E'],
+            'F' : ['ABCD',  'BEFG', 'FHIJ', 'DIKL'],
+            'B' : ['J',     'L',    'C',    'B']
         },
-        success_metric=[CubeArrangement.EDGE_C, CubeArrangement.EDGE_G, CubeArrangement.EDGE_J, CubeArrangement.EDGE_L],
+        success_metric=[
+            CubeArrangement.EDGE_C,
+            CubeArrangement.EDGE_G,
+            CubeArrangement.EDGE_J,
+            CubeArrangement.EDGE_L
+        ],
         heuristic_strength={
             '0' : 1,
             '1': 0,
@@ -198,9 +203,10 @@ class CubeHeuristics(Enum):
                 ['LUl'],
                 ['FUf']
             ],
-            'F': ['fuF'],
-            'R': ['ufUF'],
-            'U': ['URUUrURur']  
+            'F': [['fuF']],
+            'R': [['ufUF']],
+            # 'F': [['RUr']],
+            'U': [['URUUrURur']]  # ['URuR', 'UrUR', 'urURRur', 'ufUF', 'RUUr', 'uBub',  'UUruur', 'UURuurURu']
         },
         adjustment_rotations=['U'],
         adjustment_exclusion=[],
@@ -242,16 +248,11 @@ class CubeHeuristics(Enum):
     def pieces_to_set(self):
         return self.value.pieces_to_set
 
-    @staticmethod
-    def minimize(cube: str):
-        return cube.replace("UUU", "u").replace("FFF", "f").replace("RRR", "r").replace("LLL", "l").replace("BBB", "b").replace("DDD", "d")
-
     def get_operation(self, face, target):
         """ Utility wrapper for less verbose access to data. """
         return self.value.arrangement_heuristic[face][target]
 
     def get_algorithm_by_arrangement(self, candidates, target, reference_face):
-        # Determine arrangement type for this piece
         candidate_order, candidate  = self.locate_match(candidates, self.value.success_metric[target], reference_face)
 
         # The heuristic we will try
@@ -266,29 +267,96 @@ class CubeHeuristics(Enum):
                         ['']
                     ), self.value.success_metric[target]
         elif self.name == "LowerLayer":
-            # With two possible locations for the piece, we need a location map to find the order to switch them into
-            locations = {
-                CubeArrangement.CORNER_A: 3,
-                CubeArrangement.CORNER_B: 0,
-                CubeArrangement.CORNER_E: 1,
-                CubeArrangement.CORNER_F: 2
-            }
-
-            # Check if we're below and need adjustments to raise to top, or if we're above
-            if candidate.arrangement in self.value.success_metric:
-                # Candidate piece is at the bottom of the cube
-                lift_heur = self.value.heuristics['LIFT'][candidate_order][0]
-                if target == candidate_order - 1:
-                    rot_heur = ""
+            for face in self.value.arrangement_heuristic:
+                if candidate.arrangement in self.value.success_metric:
+                    active_face = self.value.success_metric[target - 1]
+                    # alt = self.value.translation_parameters[face](candidate.current_face, target)
+                    if candidate.current_face == 4:
+                        heur = self.value.heuristics['U'][0]
+                    elif candidate.current_face == 5:
+                        lift_heur = self.value.heuristics['LIFT'][candidate_order][0]
+                        if target == candidate_order - 1:
+                            rot_heur = ""
+                        else:
+                            rot_heur = "" + "U" * (candidate_order - 1)
+                        adj_heur = CubeHeuristics.translate_heuristics(
+                            self.value.heuristics['F'][0],
+                            target,
+                            ['']
+                        )
+                        heur = [self.minimize(f"{lift_heur}{rot_heur}{adj_heur[0]}")], self.value.success_metric[target]
+                        return heur
+                    else:
+                        if candidate.rm_index == 1:
+                            heur = self.value.heuristics['R'][0]
+                        else:
+                            heur = self.value.heuristics['F'][0]
                 else:
-                    rot_heur = "" + "U" * (candidate_order - 1)
-                alt_val = "" + "U" * abs(target - (candidate_order - 1))
-                adj_heur = CubeHeuristics.translate_heuristics(
-                    self.value.heuristics['F'],
-                    target,
-                    ['']
-                )
-    
+                    # rot_heur = "" + "U" * (candidate_order - 1)
+                    rot_heur = ""
+                    if candidate.arrangement == CubeArrangement.CORNER_A:
+                        rot_heur = "u"
+                    elif candidate.arrangement == CubeArrangement.CORNER_B:
+                        rot_heur = ""
+                    elif candidate.arrangement == CubeArrangement.CORNER_E:
+                        rot_heur = "U"
+                    elif candidate.arrangement == CubeArrangement.CORNER_F:
+                        rot_heur = "UU"
+
+                    if candidate.current_face == 4:
+                        heur = self.value.heuristics['U'][0]
+
+                    else:
+                        if candidate.rm_index == 1:
+                            rot_heur += "u"
+                            heur = self.value.heuristics['R'][0][0]
+                        else:
+                            heur = self.value.heuristics['F'][0][0]
+                    heur = [self.minimize(f"{rot_heur}{heur}")]
+                    return CubeHeuristics.translate_heuristics(
+                            heur,
+                            target,
+                            ['']
+                        ), self.value.success_metric[target]
+
+                    # if candidate_order == 3:
+                    #     lift_heur += 'UU'
+                    # elif candidate_order == 2:
+                    #     lift_heur += 'U'
+                    # elif candidate_order == 0:
+                    #     lift_heur += 'u'
+                    # return [f"{lift_heur}{val}" for val in self.value.heuristics['F'][0]], self.value.success_metric[target]
+                # lift_heur = ''
+                # alt = self.value.translation_parameters[face](candidate.current_face, target)
+                # if candidate_order == 0:
+                #     lift_heur += 'UU'
+                # elif candidate_order == 2:
+                #     lift_heur += ''
+                # elif candidate_order == 1:
+                #     lift_heur += 'u'
+                # return CubeHeuristics.translate_heuristics(
+                #         self.value.heuristics['SET'],
+                #         target,
+                #         [lift_heur]
+                #     ), self.value.success_metric[target]
+                # set_heur = CubeHeuristics.translate_heuristics(
+                #         self.value.heuristics['SET'],
+                #         candidate_order,
+                #         self.value.adjustment_rotations,
+                #     )
+                # if face == 'LIFT':
+                #     lift_heur = CubeHeuristics.translate_heuristics(
+                #         self.value.heuristics['LIFT'],
+                #         candidate_order,
+                #         [''],
+                #     )
+                #     return [f"{lift_heur[0]}{val}" for val in set_heur], self.value.success_metric[target]
+                # return set_heur, self.value.success_metric[target]
+
+    @staticmethod
+    def minimize(cube: str):
+        return cube.replace("UUU", "u").replace("FFF", "f").replace("RRR", "r").replace("LLL", "l").replace("BBB", "b").replace("DDD", "d")
+
     def locate_match(self, candidates, current_face, reference_block):
         """ This function is concerned with picking out the component that exactly matches the one we're looking to insert.
             current_face: the current orientation from which we're visualizing the cube, needed to make sure we get the right index.
@@ -302,7 +370,6 @@ class CubeHeuristics(Enum):
                 except ValueError:
                     pass
                 return x, candidate
-
 
     @staticmethod
     def translate_heuristics(heuristics, face, adjustment_rotations):
@@ -320,15 +387,8 @@ class CubeHeuristics(Enum):
                 transformed_heuristics.append(new_heuristic)
         return transformed_heuristics
 
-    def get_property_by_configuration(self, configuration, *args):
-        heuristic = self.get_heuristic_by_name(configuration=configuration)
-        return getattr(heuristic, args[0])
-
-    def is_phase_complete(self, faces, pieces=None):
-        if self.name == 'BottomCross':
-            return self.get_pieces_solved(faces, pieces) == self.value.pieces_to_set
-
     def get_pieces_solved(self, faces, pieces):
+        """ This function is very specialized and may be removed, it finds all the bottom pieces that are edges. """
         if self.name == 'BottomCross':
             return list(
                 filter(
@@ -691,8 +751,14 @@ class Cube:
 
         # Check if we qualify for a bottom cross
         centerpiece = self._faces.D.center
+        # for edge in self._faces.D.edges:
+        #     if edge.value != centerpiece.value:
+        #         break
+        # else:
+        #     # If we didn't break, all pieces match. No rotations needed
+        #     return ""
 
-        # Show original cube to compare against final iteration
+        # # Show original cube to compare against final iteration
         original_cube = "".join([f.value for f in self._pieces])
         print(f'Original cube: \n{original_cube}')
 
@@ -709,6 +775,7 @@ class Cube:
                     # Identify candidates
                     candidates = heuristic.get_candidates(self._faces, self._pieces)
                     algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
+                    # print(f'{algorithm=}')
 
                     # Test potential solutions
                     for heuristic_algorithm in algorithm:
@@ -718,10 +785,14 @@ class Cube:
                             tentative = ("".join([f.value for f in self._pieces]))
                             self._state.append(tentative)
                         self._reconstruct()
+                        if heuristic == CubeHeuristics.LowerLayer:
+                            print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
 
                         # Check for success by comparing block against success condition and passthrough transition steps
                         if success_condition is None or list(success_condition.adjacencies) == sorted([self._cube_map[piece] for piece in success_condition.true_indexes]):
                             final_rotations += heuristic_algorithm
+                            print("SOLUTION")
+                            print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
                             break
 
                         # Undo operations by reversing heuristic steps and applying the inverse
