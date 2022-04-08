@@ -127,6 +127,17 @@ class CubeArrangement(Enum):
 
 @dataclass
 class HeuristicsProperties:
+    """ Container for properties and constants needed to perform repeatable operations on a cube to solve a given face. 
+        order: the stage order of this cube operation
+        pieces_to_set: the number of pieces that should be solved before this phase is considered complete
+        heuristics: a key-value mapping of base algorithmic operations from a front perspective for the given phase
+        adjustment_rotations: the type of rotation that should be performed if a piece needs adjustments to match up with other pieces
+        adjustment_exclusion: lists the heuristic keys for which we should exclude adjustment rotations
+        translation_parameters: a list of callables that can be used to gather the context from which the cube should identify proxy pieces
+        arrangement_heuristic: a mapping for which heuristic should be chosen based on the target context pieces
+        success_metric: a list of pieces that show completion if they are arranged correctly when checked
+        heuristic_strength: using a pure heuristic approach, which heuristic should be chosen first if multiple candidates are valid (no longer used)
+    """
     order: int
     pieces_to_set: int
     heuristics: dict
@@ -139,6 +150,9 @@ class HeuristicsProperties:
 
 
 class CubeHeuristics(Enum):
+    """ This enumeration is used as a container for all phases of operations needing heuristic or algorithmic analysis used to solve a cube.
+        Each phase is constructed using the HeuristicProperties dataclass, and should be self sufficient to solve any input cube given a list of candidates.
+    """
     BottomCross = HeuristicsProperties(
         order=0,
         pieces_to_set=4,
@@ -234,24 +248,15 @@ class CubeHeuristics(Enum):
         }
     )
 
-    @classmethod
-    def get_phase_list(cls, up_to=10):
-        phase_list = []
-        for i, phase in enumerate(list(cls)):
-            if i > up_to:
-                break
-            phase_list.append(phase)
-        return phase_list
-
-    @property
-    def pieces_to_set(self):
-        return self.value.pieces_to_set
-
     def get_operation(self, face, target):
         """ Utility wrapper for less verbose access to data. """
         return self.value.arrangement_heuristic[face][target]
 
     def get_algorithm_by_arrangement(self, candidates, target, reference_face):
+        """ Takes in a list of candidates, the target face, and the reference value, and returns one or more algorithms that will be 
+            pertinent in solving a single candidat on the current phase given a list of potential candidates. The most likely of which is
+            chosen to be solved based on context.
+        """
         candidate_order, candidate  = self.locate_match(candidates, self.value.success_metric[target], reference_face)
 
         # The heuristic we will try
@@ -310,6 +315,18 @@ class CubeHeuristics(Enum):
 
     @staticmethod
     def minimize(moves: str):
+        """ The last step before returning the algorithm is minimization of the output rotations list
+            Values that are minimized include:
+                XXX --> x
+                xxx --> X
+                Xx  --> Remove
+                xX  --> Remove
+                
+            This function does NOT recursively minimize, however, so values such as 
+                XXxxXXxx
+            do not get minimized, the expectation is that the algorithm selection doesn't lead to strings like this, and if it might,
+            this function can be called in segments or wrapped several times.
+        """
         letters = ["f", "u", "r", "l", "b", "d"]
         for letter in letters:
             inverse_letter = str.swapcase(letter)
@@ -325,8 +342,13 @@ class CubeHeuristics(Enum):
             current_face: the current orientation from which we're visualizing the cube, needed to make sure we get the right index.
             reference_face: the block we're comparing against and trying to find a solution for
         """
+        # List out candidates and index them
         for x, candidate in enumerate(candidates):
+            
+            # Locate candidates based on adjacency matching on the same face
             if current_face.adjacencies == candidate.adjacent_faces:
+                
+                # Attempt to find candidates that match a success metric value first, before picking the alternative candidate
                 try:
                     bottomindex = list(self.value.success_metric).index(candidate.arrangement)
                     return bottomindex, candidate
@@ -336,22 +358,33 @@ class CubeHeuristics(Enum):
 
     @staticmethod
     def translate_heuristics(heuristics, face, adjustment_rotations):
+        """ Receives in a series of heuristics and applies transformations in context of a target face.
+            It also applies a series of adjustment rotations to each heuristic if several must be tested to find the correct one.
+        """
         transformed_heuristics = []
         for heuristic in heuristics:
+            
+            # Add each value in the adjustment patterns group to the beginning of each of the algorithms
             for adjustment_pattern in adjustment_rotations:
                 new_heuristic = ''
+                
+                # Ensure that both the adjustment pattern and the heuristic both get translations applied to them
                 for command in (adjustment_pattern + heuristic):
                     translated_heuristic = CubeFace.translate_rotation(command, face)
-
+                    
                     # Determine direction by upper/lowercase ascii value
                     if ord(command) >= 97:
                         translated_heuristic = translated_heuristic.lower()
                     new_heuristic += translated_heuristic
+                
+                # Add transformed and padded heuristic back to list
                 transformed_heuristics.append(new_heuristic)
         return transformed_heuristics
 
     def get_pieces_solved(self, faces, pieces):
-        """ This function is very specialized and may be removed, it finds all the bottom pieces that are edges. """
+        """ Ensures that for a given phase, all piece types matching a face or group of faces match 
+            the expected values to verify the phase solution. 
+        """
         if self.name == 'BottomCross':
             return list(
                 filter(
@@ -528,7 +561,7 @@ class CubeFace(Enum):
             self._skirt.append(skirt_group)
 
     def rotate(self, pieces, command):
-        """ Allows rotation of a single face in a clockwise or anti-clockwise direction"""
+        """ Allows rotation of a single face in a clockwise or anti-clockwise direction. """
         # Determine direction by upper/lowercase ascii value
         direction = "CW"
         if ord(command) >= 97:
@@ -553,6 +586,9 @@ class CubeFace(Enum):
 
     @staticmethod
     def translate_rotation(rotation: str, destination_face: int):
+        """ This mapping is made to allow the cube to be solved from the same initial point regardless of the perspective from which the cube
+            is being solved. This allows a dramatic cutdown of the amount of algorithms required to represent cube solutions.
+        """
         if destination_face == 0:
             return rotation
         elif destination_face == 1:
@@ -638,6 +674,7 @@ class Cube:
         self._unpack()
 
     def _unpack(self):
+        """ This process reads in a cube string and unpacks each value to create cube pieces to add to a cube. """
         # Create a cube object from input to continue validating
         color_map = {}
         for x, (piece_value, mapped_value) in enumerate(zip(self._cube_string, self._cube_map)):
@@ -666,6 +703,7 @@ class Cube:
                 raise InvalidCubeComposition(piece, self)
 
     def _remap_pieces(self):
+        """ Updates internal state to recalculate cube mappings and locations. """
         # Retrieve pinned centerpieces by location
         for x, i in enumerate(range(4, 53, 9)):
             self._pinned_centerpieces[self._cube_string[i]] = x
@@ -681,6 +719,10 @@ class Cube:
             raise InvalidCubeCenter(self)
 
     def _add_piece(self, piece: CubePiece):
+        """ Add a single piece to a cube representation. At most 54 pieces may be added.
+            Checks to make sure that the piece is valid in context with the previously added pieces,
+            and ensures that the piece types get updated as new pieces are added.
+        """
         # Check boundary conditions before adding piece
         if CubeArrangement.is_valid_adjacency(piece.adjacent_faces) is None:
             if piece.arrangement.piece_type == PieceType.CORNER.value:
@@ -699,7 +741,7 @@ class Cube:
             self._update()
 
     def _update(self):
-        """ Once the cube object has been filled, calculate faces, corners, and edges. """
+        """ Calculate faces, corners, and edges for a cube. """
         for i in range(0, CUBE_FACES):
             # Obtain centerpiece, edges, and corners
             self._faces(i).center = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CENTER)[0]
@@ -707,6 +749,7 @@ class Cube:
             self._faces(i).corners = CubeArrangement.get_face_pieces(self._pieces, i, PieceType.CORNER)
 
     def rotate(self, rotate_command: List[str] = None):
+        """ Performs cube rotations from a command list, reconstructing/rebuilding after each execution phase and appending to global state. """
         # Iterate through rotation commands, updating state each time
         for command in rotate_command:
             # Perform in-place rotation within face
@@ -717,6 +760,9 @@ class Cube:
             self._state.append(self._cube_string)
 
     def solve(self, cube_phase=10):
+        """ This method executes a cube solve up to a certain operation phase.
+            It locates the candidates, queries the algorithm class, performs the prescribed rotations, and checks if output was successful.
+        """
         # First step is to check if the cube is already solved, if so, return an empty string
         last = self._cube_map[0]
         for new_last in self._cube_map[1:54]:
@@ -736,49 +782,55 @@ class Cube:
         original_cube = "".join([f.value for f in self._pieces])
         print(f'Original cube: \n{original_cube}')
 
-        # Run for as many pieces as we have to set, leave headroom to catch errors
+        # Store a list of all rotations for this cube
         final_rotations = ''
 
+        # Run once for as many heuristic phases as we have. Phases that show completion should be skipped
         for heuristic in heuristic_phases:
+            
+            # Leave headroom for unsolved pieces when operations require multiple laps
             remaining_iterations = 1
             unsolved_pieces = True
-
+            
+            # Candidates are read on every loop, some heuristics require multiple passes
             while unsolved_pieces:
+                
                 # Parse through candidates to find best match
                 for current_face in [0, 1, 2, 3]:
-                    # Identify candidates
+                    
+                    # Identify candidates for current heuristic phase
                     candidates = heuristic.get_candidates(self._faces, self._pieces)
+                    
+                    # Identify algorith or heuristic leading to a solution
                     algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
 
-                    # Test potential solutions
+                    # Test potential solutions from returned algorithms
                     for heuristic_algorithm in algorithm:
-                        # Rotate face
+                        
+                        # Perform and apply individual rotations and update state list, then rebuild cube mappings
                         for command in heuristic_algorithm:
                             self._faces[command.upper()].rotate(self._pieces, command)
                             tentative = ("".join([f.value for f in self._pieces]))
                             self._state.append(tentative)
                         self._reconstruct()
-                        if heuristic == CubeHeuristics.LowerLayer:
-                            print(f'\nState after {heuristic_algorithm}:\n{",".join(self._state)}')
+
 
                         # Check for success by comparing block against success condition and passthrough transition steps
-                        if success_condition is None or list(success_condition.adjacencies) == sorted([self._cube_map[piece] for piece in success_condition.true_indexes]):
+                        if success_condition is None or self._heuristic_success(success_condition):
                             final_rotations += heuristic_algorithm
-                            print("SOLUTION")
                             break
 
-                        # Undo operations by reversing heuristic steps and applying the inverse
+                        # Undo operations by reversing heuristic steps and applying the inverse steps, then rebuild cube mappings
                         for command in reversed(heuristic_algorithm.swapcase()):
                             self._faces[command.upper()].rotate(self._pieces, command)
                             self._state.pop()
                         self._reconstruct()
 
-                # Check if all pieces have been solved
+                # Check if all pieces have been solved for current phase (TODO: in the future, run all verifications in series to make sure a step hasn't broken another)
                 if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
                     unsolved_pieces = False
-                    print("PASSED!")
-                    # exit(0)
                 elif remaining_iterations <= 0:
+                    # If we have exceeded the number of iteration steps, the cube may be invalid (tampered) or we have an edge case to consider
                     raise TamperedCube(self)
                 remaining_iterations -= 1
 
@@ -788,6 +840,10 @@ class Cube:
             # Return final rotation
             print(f'Rotations: \t\t{final_rotations}\n')
         return final_rotations
+    
+    def _heuristic_success(self, success_condition):
+        """ Verify that heuristic success condition is true by checking predicted adjacencies vs actual adjacencies """
+        return list(success_condition.adjacencies) == sorted([self._cube_map[piece] for piece in success_condition.true_indexes])
 
     def _reconstruct(self):
         """ Update cube string by appending all cube values in order to a string to save state, and remap (this is useful in case a center turn is ever added). """
