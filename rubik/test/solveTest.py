@@ -30,8 +30,8 @@ class SolveTest(unittest.TestCase):
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
     def test_solve_011_ShouldReturnFrontRotation(self):
         parm = {
@@ -269,7 +269,6 @@ class SolveTest(unittest.TestCase):
     # SINGLE MOVE SOLUTIONS
     # --------------------------------------------------------
     
-
     def test_solve_040_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
@@ -277,16 +276,15 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'r'
+            'solution': 'rRUrufuFBUburuRLUlubuBFUfuluL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
-
-
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
+        
     def test_solve_041_ShouldReturnSingleRotationOnSolveRequest(self):
         parm = {
             'op'    : 'solve',
@@ -294,16 +292,15 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'R'
+            'solution': 'RRUrufuFBUburuRLUlubuBFUfuluL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
-    @unittest.skip('attempting a single rotation test')
     def test_solve_042_ShouldSolveComplexLastCrossPiece(self):
         parm = {
             'op'    : 'solve',
@@ -311,20 +308,20 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'UFrfLLUBBl'
+            'solution': 'UFrfLLUBBlRUrUrURFUfubUBUulULuufuFBUburuRLUlubuBFUfuluL'
+            # 'solution': 'UFrfLLUBBlLUlUfuFUBUUbUBubFUfubUBuulUL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
     # --------------------------------------------------------
     # MULTI-MOVE SOLUTIONS
     # --------------------------------------------------------
-    
-    @unittest.skip('attempting a single rotation test')
+
     def test_solve_043_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
@@ -332,14 +329,15 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'UrFFrFFUUBBBlFb'
+            'solution': 'UrFFrFFUUBBBlFbubuBBUbuuFUUfUFufuufuFuurURLUlubuBFUfuluL'
+            # 'solution': 'UrFFrFFUUBBBlFbLUlUURUUrURurFUfUUBUUbUBubFUUfUFufULUUlULul'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
     def test_solve_044_ShouldSolveBottomCross(self):
         parm = {
@@ -348,16 +346,16 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'RRFUbRlUBBUBlbFUfUUfuFUrURFUfbuBUUulUL'
+            'solution': 'RRFUbRlUBBUBlbFUfuufuFUrURFUfbuBUlUL'
+            # 'solution': 'RRFUbRlUBBUBlbFUfUUfuFUrURFUfbuBUlUL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
-    @unittest.skip('attempting a single rotation test')
     def test_solve_045_ShouldSolveBottomCross(self):
         parm = {
             'op'    : 'solve',
@@ -365,16 +363,15 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'BBUUFFRRLUlBBl'
+            'solution': 'BBUUFFRRLUlBBluufuFLUlurURLUluubUBuluL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
 
-    @unittest.skip('attempting a single rotation test')
     def test_solve_046_ShouldSolveBottomCrossWithComplexSolution(self):
         parm = {
             'op'    : 'solve',
@@ -382,24 +379,41 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            'solution': 'frbLbuBLLFF'
+            'solution': 'frbLbuBLLFFuruRFUfubUBuFUUfUFufuRUUrURurBUburuRLUlubuBFUfuluL'
+            # 'solution': 'frbLbuBLLFFLUlUfuFFUfubUBUlULruR'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
         self.assertEqual(expected['status'], status)
 
-        solution = result.get('solution', None)
-        self.assertEqual(expected['solution'], solution)
-        
-    @unittest.skip('attempting a single rotation test')
-    def test_solve_046_ShouldSolveBottomCrossMissedFromA4Grade(self):
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
+
+    def test_solve_047_ShouldSolveBottomCrossWithComplexSolution(self):
+        parm = {
+            'op'    : 'solve',
+            'cube'  : '510400103321113412401224421522330430230441345550555253',
+        }
+        expected = {
+            'status': 'ok',
+            'solution': 'FUfuufuFUrURFUfbuBUlUL'
+            # 'solution': 'FUfUUfuFUrURFUfbuBUlUL'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        rotations = result.get('solution', None)
+        self.assertEqual(expected['solution'], rotations)
+
+    def test_solve_048_ShouldSolveBottomCrossMissedFromA4Grade(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'CggCggCggzrrzrrzrrgCCgCCgCCzzrzzrzzrL333L3L333LLL3L3LL',
         }
         expected = {
             'status': 'ok',
-            'solution': 'FFRRBBLL'
+            'solution': 'FFRRBBLLRUrufuFUbUBuuluLRUrufuFurURLUlubuBFUfuluL'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -512,6 +526,25 @@ class SolveTest(unittest.TestCase):
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
 
+    def test_solve_932_ShouldReturnErrorOnUnsolveableBottomCrossInvalidArrangement(self):
+        """ This cube has an arrangement of pieces that is invalid, and has been tampered with. This
+            was a happy test on the last assignment due to this being undetectable and the bottom cross was still
+            solveable, but as it now leads to an unsolvable configuration, it has transitioned from 050 -> 932
+        """
+        parm = {
+            'op'  : 'solve',
+            'cube': '004104015235214354211124052241030351421342533450352503',
+        }
+        expected = {
+            'status'   : 'error: invalid cube configuration - check that the cube has not been tampered with'
+        }
+        result = solve._solve(parm)
+        status = result.get('status', None)
+        self.assertEqual(expected['status'], status)
+
+        # Verify that we have not sent a cube parameter on a failure case
+        self.assertNotIn('cube', result)
+
     def test_solve_940_ShouldReturnProperlyFormattedErrorString(self):
         """ This test case was derived upon review to address a formatting issue causing failed tests. Matches a3_930. """
         parm = {
@@ -529,24 +562,4 @@ class SolveTest(unittest.TestCase):
 
         # Verify that we have not sent a cube parameter on a failure case
         self.assertNotIn('cube', result)
-
-    def test_solve_050_ShouldDetectUnsolvableTamperedCubes(self):
-        """ This cube has an arrangement of pieces that is invalid, and has been tampered with, and after adding centerpieces, 
-            can no longer be solved. This was turned into a sad test to handle change in this behavior.
-        """
-        parm = {
-            'op'  : 'solve',
-            'cube': '004104015235214354211124052241030351421342533450352503',
-        }
-        expected = {
-            'status'   : 'error: invalid cube configuration - check that the cube has not been tampered with',
-        }
-        
-        result = solve._solve(parm)
-        status = result.get('status', None)
-        self.assertEqual(expected['status'], status)
-
-        # Verify that we have not sent a cube parameter on a failure case
-        self.assertNotIn('cube', result)
-
 
