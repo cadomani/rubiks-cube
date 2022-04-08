@@ -795,36 +795,8 @@ class Cube:
             # Candidates are read on every loop, some heuristics require multiple passes
             while unsolved_pieces:
                 
-                # Parse through candidates to find best match
-                for current_face in [0, 1, 2, 3]:
-                    
-                    # Identify candidates for current heuristic phase
-                    candidates = heuristic.get_candidates(self._faces, self._pieces)
-                    
-                    # Identify algorith or heuristic leading to a solution
-                    algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
-
-                    # Test potential solutions from returned algorithms
-                    for heuristic_algorithm in algorithm:
-                        
-                        # Perform and apply individual rotations and update state list, then rebuild cube mappings
-                        for command in heuristic_algorithm:
-                            self._faces[command.upper()].rotate(self._pieces, command)
-                            tentative = ("".join([f.value for f in self._pieces]))
-                            self._state.append(tentative)
-                        self._reconstruct()
-
-
-                        # Check for success by comparing block against success condition and passthrough transition steps
-                        if success_condition is None or self._heuristic_success(success_condition):
-                            final_rotations += heuristic_algorithm
-                            break
-
-                        # Undo operations by reversing heuristic steps and applying the inverse steps, then rebuild cube mappings
-                        for command in reversed(heuristic_algorithm.swapcase()):
-                            self._faces[command.upper()].rotate(self._pieces, command)
-                            self._state.pop()
-                        self._reconstruct()
+                # Apply rotations and append to rotation list if any were found
+                final_rotations += self._attempt_algorithms(heuristic, centerpiece)
 
                 # Check if all pieces have been solved for current phase (TODO: in the future, run all verifications in series to make sure a step hasn't broken another)
                 if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
@@ -840,6 +812,43 @@ class Cube:
             # Return final rotation
             print(f'Rotations: \t\t{final_rotations}\n')
         return final_rotations
+    
+    
+    def _attempt_algorithms(self, heuristic, centerpiece):
+        # Parse through candidates to find best match
+        new_rotations = ''
+        for current_face in [0, 1, 2, 3]:
+            
+            # Identify candidates for current heuristic phase
+            candidates = heuristic.get_candidates(self._faces, self._pieces)
+            
+            # Identify algorith or heuristic leading to a solution
+            algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
+
+            # Test potential solutions from returned algorithms
+            for heuristic_algorithm in algorithm:
+                
+                # Perform and apply individual rotations and update state list, then rebuild cube mappings
+                for command in heuristic_algorithm:
+                    self._faces[command.upper()].rotate(self._pieces, command)
+                    tentative = ("".join([f.value for f in self._pieces]))
+                    self._state.append(tentative)
+                self._reconstruct()
+
+
+                # Check for success by comparing block against success condition and passthrough transition steps
+                if success_condition is None or self._heuristic_success(success_condition):
+                    new_rotations += heuristic_algorithm
+                    break
+
+                # Undo operations by reversing heuristic steps and applying the inverse steps, then rebuild cube mappings
+                for command in reversed(heuristic_algorithm.swapcase()):
+                    self._faces[command.upper()].rotate(self._pieces, command)
+                    self._state.pop()
+                self._reconstruct()
+        
+        # Return newly identified rotations or an empty string if there are none
+        return new_rotations
     
     def _heuristic_success(self, success_condition):
         """ Verify that heuristic success condition is true by checking predicted adjacencies vs actual adjacencies """
