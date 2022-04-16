@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request
+
+from flask import Flask, request, jsonify
 import rubik.dispatch as dispatch
 from rubik.dispatch import _dispatch
 
@@ -20,6 +21,18 @@ def server():
         result = _dispatch(dict(request.args.items()))
         print(f"Response --> {result}")
         return str(result)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/api')
+def api():
+    try:
+        result = _dispatch(dict(request.args.items()))
+        res = jsonify(result)
+        res.headers.add('Access-Control-Allow-Origin', '*')
+        print(f"Response --> {result}")
+        return res
     except Exception as e:
         return str(e)
 
