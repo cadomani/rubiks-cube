@@ -163,11 +163,11 @@ class CubeHeuristics(Enum):
             ],
             'R': [
                 ['RF', 'RRF', 'rF'],
-                ['RUFF', 'RRUFF', 'rUFF']
+                ['RUFF', 'RRUFF', 'rUFF', 'UFF']
             ],
             'L': [
-                ['Lf', 'LLf', 'lf'],
-                ['luLFF', 'lulFF', 'luFF']
+                ['Lfl', 'LLfll', 'lf'],
+                ['luLFF', 'lulFF', 'luFF', 'uFF', 'LulFF']
             ],
             'U' : [
                 ['UUFF'],
@@ -175,7 +175,7 @@ class CubeHeuristics(Enum):
             ],
             'B': [
                 ['BBUUFF'],
-                ['BlUFF']
+                ['bLuFF', 'BrUFF']
             ]
         },
         adjustment_rotations=[],
@@ -257,10 +257,16 @@ class CubeHeuristics(Enum):
             pertinent in solving a single candidat on the current phase given a list of potential candidates. The most likely of which is
             chosen to be solved based on context.
         """
-        candidate_order, candidate  = self.locate_match(candidates, self.value.success_metric[target], reference_face)
-
         # The heuristic we will try
         if self.name == "BottomCross":
+            # Find a candidate for this piece
+            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target], reference_face)
+
+            # Exit with no algorithm as piece is already solved
+            if candidate_order == -1:
+                return "", self.value.success_metric[target]
+
+            
             # If the piece is already on the front of the cube, perform adjustment moves to correct
             for face in self.value.arrangement_heuristic:
                 if any(f'EDGE_{point}' in candidate.arrangement.name for point in self.get_operation(face, target)):
@@ -355,6 +361,9 @@ class CubeHeuristics(Enum):
                 except ValueError:
                     pass
                 return x, candidate
+        else:
+            # This indicates this face is already solved as there is no candidate
+            return -1, None
 
     @staticmethod
     def translate_heuristics(heuristics, face, adjustment_rotations):
@@ -409,11 +418,19 @@ class CubeHeuristics(Enum):
         """
         possibilities = []
         if self.name == 'BottomCross':
-            possibilities = CubeArrangement.get_cohesive_pieces(
+            preliminary = CubeArrangement.get_cohesive_pieces(
                 pieces,
                 faces.D.center.value,
                 PieceType.EDGE
             )
+
+            # Eliminate pieces that are already set
+            for possibility in preliminary:
+                if possibility.adjacent_faces == possibility.arrangement.adjacencies:
+                    # If on piece 45 and above (bottom of the cube), skip unless stem doesn't match and recalculation is needed
+                    if possibility.index >= 45:
+                        continue
+                possibilities.append(possibility)
         elif self.name == 'LowerLayer':
             possibilities = CubeArrangement.get_cohesive_pieces(
                 pieces,
@@ -773,7 +790,8 @@ class Cube:
             return ""
         
         # Target a specific solve step or a series of steps
-        heuristic_phases = [CubeHeuristics.BottomCross, CubeHeuristics.LowerLayer]
+        # heuristic_phases = [CubeHeuristics.BottomCross, CubeHeuristics.LowerLayer]
+        heuristic_phases = [CubeHeuristics.BottomCross]
 
         # Check if we qualify for a bottom cross
         centerpiece = self._faces.D.center
@@ -821,6 +839,10 @@ class Cube:
             
             # Identify candidates for current heuristic phase
             candidates = heuristic.get_candidates(self._faces, self._pieces)
+            
+            # If we have not found any candidates, this face is solved
+            if not candidates:
+                break
             
             # Identify algorith or heuristic leading to a solution
             algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
