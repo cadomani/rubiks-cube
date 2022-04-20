@@ -790,8 +790,7 @@ class Cube:
             return ""
         
         # Target a specific solve step or a series of steps
-        # heuristic_phases = [CubeHeuristics.BottomCross, CubeHeuristics.LowerLayer]
-        heuristic_phases = [CubeHeuristics.BottomCross]
+        heuristic_phases = [CubeHeuristics.BottomCross, CubeHeuristics.LowerLayer]
 
         # Check if we qualify for a bottom cross
         centerpiece = self._faces.D.center
