@@ -277,11 +277,24 @@ class CubeHeuristics(Enum):
                         ['']
                     ), self.value.success_metric[target]
         elif self.name == "LowerLayer":
+            # Find a candidate for this piece
+            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target], reference_face)
+
+            # Exit with no algorithm as piece is already solved
+            if candidate_order == -1:
+                return "", self.value.success_metric[target]
+
             # Check if we're below and need adjustments to raise to top, or if we're above
             if candidate.arrangement in self.value.success_metric:
                 # Candidate piece is at the bottom of the cube
                 lift_heur = self.value.heuristics['LIFT'][candidate_order][0]
-                rot_heur = "" + "u" * abs(target - (candidate_order - 1))
+                if (candidate_order - 1) < target:
+                    rot_heur = "" + "u" * (target - (candidate_order - 1))
+                elif (candidate_order - 1) == target:
+                    rot_heur = ""
+                else:
+                    rot_heur = "" + "U" * ((candidate_order - 1) - target)
+                face = ""
                 if candidate.current_face == 5:
                     face = "F"
                 elif candidate.rm_index == 7:
@@ -296,10 +309,34 @@ class CubeHeuristics(Enum):
                 )
 
                 # Combine lift, rotation, and adjustment heuristics
+                print(f"Unrotated: {self.minimize(f'{lift_heur}{rot_heur}{self.value.heuristics[face][0]}')}")
                 return [self.minimize(f"{lift_heur}{rot_heur}{adj_heur[0]}")], self.value.success_metric[target]
             else:
                 # Find out how many spaces we need to rotate the top to line up with the bottom piece
-                rot_heur = "" + "u" * abs(target - self.value.arrangement_heuristic['SET'].index(candidate.arrangement.name.split('_')[1]))
+                if candidate.current_face == 0:
+                    candidate_order = 3 if candidate.rm_index == 1 else 0
+                elif candidate.current_face == 4:
+                    if candidate.rm_index == 1:
+                        candidate_order = 2
+                    elif candidate.rm_index == 3:
+                        candidate_order = 1
+                    elif candidate.rm_index == 9:
+                        candidate_order = 0
+                    else:
+                        candidate_order = 3
+                elif candidate.rm_index == 1:
+                    # Red piece on right-hand side
+                    candidate_order = candidate.current_face - 1
+                else:
+                    candidate_order = candidate.current_face
+
+                if candidate_order < target:
+                    # rot_heur = "" + "u" * abs(target - self.value.arrangement_heuristic['SET'].index(candidate.arrangement.name.split('_')[1]))
+                    rot_heur = "" + "u" * (target - candidate_order)
+                elif candidate_order == target:
+                    rot_heur = ""
+                else:
+                    rot_heur = "" + "U" * (candidate_order - target)
 
                 # Candidate piece is on top of the cube
                 if candidate.current_face == 4:
@@ -313,6 +350,7 @@ class CubeHeuristics(Enum):
                     heur = self.value.heuristics['F'][0]
 
                 # Apply rotations in context with the current face
+                print(f"Unrotated: {self.minimize(f'{rot_heur}{heur}')}")
                 return CubeHeuristics.translate_heuristics(
                         [self.minimize(f"{rot_heur}{heur}")],
                         target,
@@ -432,11 +470,19 @@ class CubeHeuristics(Enum):
                         continue
                 possibilities.append(possibility)
         elif self.name == 'LowerLayer':
-            possibilities = CubeArrangement.get_cohesive_pieces(
+            preliminary = CubeArrangement.get_cohesive_pieces(
                 pieces,
                 faces.D.center.value,
                 PieceType.CORNER
             )
+
+            # Eliminate pieces that are already set
+            for possibility in preliminary:
+                if possibility.adjacent_faces == possibility.arrangement.adjacencies:
+                    # If on piece 45 and above (bottom of the cube), skip unless stem doesn't match and recalculation is needed
+                    if possibility.index >= 45:
+                        continue
+                possibilities.append(possibility)
         return possibilities
 
 
