@@ -247,6 +247,28 @@ class CubeHeuristics(Enum):
             '3': 0
         }
     )
+    MiddleLayer = HeuristicsProperties(
+        order=2,
+        pieces_to_set=4,
+        heuristics={
+            'L': ['ulULUFuf'],
+            'R': ['URurufUF'],
+        },
+        adjustment_rotations=['U'],
+        adjustment_exclusion=[],
+        translation_parameters={
+            'U': lambda face, v: face != (0 + v) % 4,
+            'R': lambda face, v: face == (1 + v) % 4,
+        },
+        arrangement_heuristic={},
+        success_metric=[
+            CubeArrangement.EDGE_B,
+            CubeArrangement.EDGE_F,
+            CubeArrangement.EDGE_I,
+            CubeArrangement.EDGE_D
+        ],
+        heuristic_strength={}
+    )
 
     def get_operation(self, face, target):
         """ Utility wrapper for less verbose access to data. """
@@ -356,6 +378,36 @@ class CubeHeuristics(Enum):
                         target,
                         ['']
                     ), self.value.success_metric[target]
+        elif self.name == "MiddleLayer":
+            for candidate in candidates:
+                if candidate.adjacent_faces == candidate.arrangement.adjacencies:
+                    continue
+                rot = ""
+                if candidate.current_face == 4:
+                    return [''], None
+                elif candidate.current_face != target:
+                    rot += "u" * (((target - candidate.current_face) + 4) % 4)
+                heur = ['']
+                left_side = ((target - 1) + 4) % 4
+                right_side = ((target + 1) + 4) % 4
+                if left_side in list(candidate.adjacent_faces):
+                    heur = self.value.heuristics['L']
+                    adj_heur = CubeHeuristics.translate_heuristics(
+                        heur,
+                        target,
+                        [rot]
+                    )
+                    return [self.minimize(adj_heur[0])], self.value.success_metric[left_side]
+                elif right_side in list(candidate.adjacent_faces):
+                    heur = self.value.heuristics['R']
+                    adj_heur = CubeHeuristics.translate_heuristics(
+                        heur,
+                        target,
+                        [rot]
+                    )
+                    return [self.minimize(adj_heur[0])], self.value.success_metric[target]
+            return [''], None
+
 
     @staticmethod
     def minimize(moves: str):
@@ -448,8 +500,20 @@ class CubeHeuristics(Enum):
                         pieces[45:54]
                 )
             ).__len__()
+        elif self.name == "MiddleLayer":
+            return list(
+                filter(
+                    lambda v: (
+                        v.value == faces.F.center.value or
+                        v.value == faces.R.center.value or
+                        v.value == faces.B.center.value or
+                        v.value == faces.L.center.value
+                    ) and v.arrangement.piece_type == 'EDGE',
+                    [pieces[5], pieces[12], pieces[14], pieces[21], pieces[23], pieces[30], pieces[32], pieces[3]]
+                )
+            ).__len__() / 2
 
-    def get_candidates(self, faces, pieces):
+    def get_candidates(self, faces, pieces, targeted=None):
         """ Obtain all possible piece candidates for insertion in no particular order.
             This function takes an array of faces and pieces to find pieces of the same color, orientation, and type.
             Functionality can be overridden based on the current phase for maximum flexibility
@@ -483,6 +547,18 @@ class CubeHeuristics(Enum):
                     if possibility.index >= 45:
                         continue
                 possibilities.append(possibility)
+        elif self.name == 'MiddleLayer':
+            preliminary = CubeArrangement.get_cohesive_pieces(
+                pieces,
+                list(faces)[targeted].center.value,
+                PieceType.EDGE
+            )
+            
+            # Eliminate pieces that are already set
+            for possibility in preliminary:
+                # Only add pieces that are not already adjacent to others and ones that do not contain any bottom pieces
+                if possibility.home_face != 5 and 4 not in list(possibility.adjacent_faces):
+                    possibilities.append(possibility)
         return possibilities
 
 
@@ -883,7 +959,7 @@ class Cube:
         for current_face in [0, 1, 2, 3]:
             
             # Identify candidates for current heuristic phase
-            candidates = heuristic.get_candidates(self._faces, self._pieces)
+            candidates = heuristic.get_candidates(self._faces, self._pieces, targeted=current_face)
             
             # If we have not found any candidates, this face is solved
             if not candidates:
