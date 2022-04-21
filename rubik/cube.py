@@ -461,7 +461,7 @@ class CubeHeuristics(Enum):
                 )
             ).__len__()
         elif self.name == "MiddleLayer":
-            return list(
+            pieces = list(
                 filter(
                     lambda v: (
                         v.value == faces.F.center.value or
@@ -471,7 +471,11 @@ class CubeHeuristics(Enum):
                     ) and v.arrangement.piece_type == 'EDGE',
                     [pieces[5], pieces[12], pieces[14], pieces[21], pieces[23], pieces[30], pieces[32], pieces[3]]
                 )
-            ).__len__() / 2
+            )
+            # total = 0
+            # for piece in pieces:
+            #     print(piece)
+            return int(pieces.__len__() / 2)
 
     def get_candidates(self, faces, pieces, targeted=None):
         """ Obtain all possible piece candidates for insertion in no particular order.
@@ -508,21 +512,54 @@ class CubeHeuristics(Enum):
                         continue
                 possibilities.append(possibility)
         elif self.name == 'MiddleLayer':
+            # Naively find all cube pieces matching the targeted face color
             preliminary = CubeArrangement.get_cohesive_pieces(
                 pieces,
                 list(faces)[targeted].center.value,
                 PieceType.EDGE
             )
             
-            # Eliminate pieces that are already set
+            # Filter through preliminary pieces to exclude those that have the top color on them and those matching bottom edges
+            filtered_preliminary = []
             for possibility in preliminary:
-                # Only add pieces that are not already adjacent to others and ones that do not contain any bottom pieces
-                if possibility.home_face != 5 and 4 not in list(possibility.adjacent_faces):
-                    possibilities.append(possibility)
-        
+                if (4 not in list(possibility.adjacent_faces) and
+                    possibility.arrangement not in [
+                        CubeArrangement.EDGE_C,
+                        CubeArrangement.EDGE_G,
+                        CubeArrangement.EDGE_J,
+                        CubeArrangement.EDGE_L
+                ]):
+                    if str(possibility.current_face) != possibility.value:
+                        possibilities.append(possibility)
+
+            # Detect deadlock if all four pieces are on top but not all four pieces are solved
+            if not possibilities and self.get_pieces_solved(faces, pieces) < 4:
+                # Return the piece for this face to be popped out
+                print("Deadlock detected!!!")
+                return possibilities
+                # raise NotImplementedError("Deadlock detected")
+            elif len(possibilities) == 1 and possibilities[0].arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
+                return possibilities
+            else:
+                for possibility in possibilities:
+                    if possibility.arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
+                        if str(possibility.current_face) != possibility.value:
+                            # Deadlock can also occur if a piece is already set and there are no other pieces available to knock it out
+                            print("Secondary deadlock detected!!!")
+                            return [possibility]
+
+            # Pop all possibilities not in top row if not in deadlock
+            for possibility in possibilities:
+                if possibility.arrangement in [CubeArrangement.EDGE_A, CubeArrangement.EDGE_E, CubeArrangement.EDGE_H, CubeArrangement.EDGE_K]:
+                    if possibility.current_face != 4:
+                        return [possibility]
+            else:
+                # Make cube rotate faces so it doesn't skip the entire face as solved (override default behavior)
+                raise FaceAlreadySolved()
+
         # If no possibilities remain, phase already solved
         if not possibilities:
-            raise PhaseAlreadySolved() 
+            raise PhaseAlreadySolved()
         return possibilities
 
 
@@ -897,9 +934,13 @@ class Cube:
             
             # Leave headroom for unsolved pieces when operations require multiple laps
             remaining_iterations = 1
-            unsolved_pieces = True
+            
+            # Middle layer gets a lot more iterations due to it needing to reevaluate the cube again after any move
+            if heuristic == CubeHeuristics.MiddleLayer:
+                remaining_iterations = 16
             
             # Candidates are read on every loop, some heuristics require multiple passes
+            unsolved_pieces = True
             while unsolved_pieces:
                 
                 # Apply rotations and append to rotation list if any were found
