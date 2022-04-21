@@ -340,12 +340,14 @@ class CubeHeuristics(Enum):
                     ), self.value.success_metric[target]
         elif self.name == "MiddleLayer":
             for candidate in candidates:
-                if candidate.adjacent_faces == candidate.arrangement.adjacencies:
-                    continue
                 rot = ""
-                if candidate.current_face == 4:
-                    return [''], None
-                elif candidate.current_face != target:
+                lift = False
+                if candidate.arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
+                    lift = True
+                elif candidate.current_face == 4:
+                    lift = True
+                
+                if candidate.current_face != target:
                     rot += "u" * (((target - candidate.current_face) + 4) % 4)
                 heur = ['']
                 left_side = ((target - 1) + 4) % 4
@@ -472,10 +474,14 @@ class CubeHeuristics(Enum):
                     [pieces[5], pieces[12], pieces[14], pieces[21], pieces[23], pieces[30], pieces[32], pieces[3]]
                 )
             )
-            # total = 0
-            # for piece in pieces:
-            #     print(piece)
-            return int(pieces.__len__() / 2)
+            if int(pieces.__len__() / 2):
+                # Double check work to make sure order matches as well
+                if (pieces[-1].value == faces.F.center.value and pieces[0].value  == faces.F.center.value and
+                    pieces[1].value  == faces.R.center.value and pieces[2].value  == faces.R.center.value and
+                    pieces[3].value  == faces.B.center.value and pieces[4].value  == faces.B.center.value and
+                    pieces[6].value  == faces.L.center.value and pieces[6].value  == faces.L.center.value
+                    ):
+                    return 4
 
     def get_candidates(self, faces, pieces, targeted=None):
         """ Obtain all possible piece candidates for insertion in no particular order.
@@ -512,6 +518,10 @@ class CubeHeuristics(Enum):
                         continue
                 possibilities.append(possibility)
         elif self.name == 'MiddleLayer':
+            # Exit phase if all pieces are solved
+            if self.get_pieces_solved(faces, pieces) == 4:
+                raise PhaseAlreadySolved()
+            
             # Naively find all cube pieces matching the targeted face color
             preliminary = CubeArrangement.get_cohesive_pieces(
                 pieces,
@@ -522,40 +532,49 @@ class CubeHeuristics(Enum):
             # Filter through preliminary pieces to exclude those that have the top color on them and those matching bottom edges
             filtered_preliminary = []
             for possibility in preliminary:
-                if (4 not in list(possibility.adjacent_faces) and
+                possibility_faces = list(possibility.adjacent_faces)
+                if (4 not in possibility_faces and
                     possibility.arrangement not in [
                         CubeArrangement.EDGE_C,
                         CubeArrangement.EDGE_G,
                         CubeArrangement.EDGE_J,
                         CubeArrangement.EDGE_L
                 ]):
-                    if str(possibility.current_face) != possibility.value:
-                        possibilities.append(possibility)
-
-            # Detect deadlock if all four pieces are on top but not all four pieces are solved
-            if not possibilities and self.get_pieces_solved(faces, pieces) < 4:
-                # Return the piece for this face to be popped out
-                print("Deadlock detected!!!")
-                return possibilities
-                # raise NotImplementedError("Deadlock detected")
-            elif len(possibilities) == 1 and possibilities[0].arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
-                return possibilities
-            else:
-                for possibility in possibilities:
-                    if possibility.arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
-                        if str(possibility.current_face) != possibility.value:
-                            # Deadlock can also occur if a piece is already set and there are no other pieces available to knock it out
-                            print("Secondary deadlock detected!!!")
+                    # Only return candidate if it is valid for this face (long approach for debugging)
+                    if (targeted == 0 or targeted == 1) and [0, 1] == possibility_faces:
+                        if pieces[5].value == faces.F.center.value and pieces[12].value == faces.R.center.value:
+                            continue
+                        elif 4 in possibility_faces:
+                            filtered_preliminary.append(possibility)
+                        else:
                             return [possibility]
+                    elif (targeted == 0 or targeted == 3) and [0, 3] == possibility_faces:
+                        if pieces[32].value == faces.L.center.value and pieces[3].value == faces.F.center.value:
+                            continue
+                        elif 4 in possibility_faces:
+                            filtered_preliminary.append(possibility)
+                        else:
+                            return [possibility]
+                    elif (targeted == 1 or targeted == 2) and [1, 2] == possibility_faces:
+                        if pieces[14].value == faces.R.center.value and pieces[21].value == faces.B.center.value:
+                            continue
+                        elif pieces[possibility.arrangement.true_indexes[0]].value == faces.B.center.value and pieces[possibility.arrangement.true_indexes[1]].value == faces.R.center.value and targeted == 1:
+                            raise FaceAlreadySolved()
+                        elif 4 in possibility_faces:
+                            filtered_preliminary.append(possibility)
+                        else:
+                            return [possibility]
+                    elif (targeted == 2 or targeted == 3) and [2, 3] == possibility_faces:
+                        if pieces[23].value == faces.B.center.value and pieces[30].value == faces.L.center.value:
+                            continue
+                        elif 4 in possibility_faces:
+                            filtered_preliminary.append(possibility)
+                        else:
+                            return [possibility]
+            
+            # If no possibilities remain, that does not mean there are none left, in this case, mark the face as solved for next pass
+            raise FaceAlreadySolved()
 
-            # Pop all possibilities not in top row if not in deadlock
-            for possibility in possibilities:
-                if possibility.arrangement in [CubeArrangement.EDGE_A, CubeArrangement.EDGE_E, CubeArrangement.EDGE_H, CubeArrangement.EDGE_K]:
-                    if possibility.current_face != 4:
-                        return [possibility]
-            else:
-                # Make cube rotate faces so it doesn't skip the entire face as solved (override default behavior)
-                raise FaceAlreadySolved()
 
         # If no possibilities remain, phase already solved
         if not possibilities:
