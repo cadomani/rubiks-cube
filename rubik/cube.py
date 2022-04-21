@@ -271,7 +271,7 @@ class CubeHeuristics(Enum):
         # The heuristic we will try
         if self.name == "BottomCross":
             # Find a candidate for this piece
-            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target], reference_face)
+            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target])
             
             # If the piece is already on the front of the cube, perform adjustment moves to correct
             for face in self.value.arrangement_heuristic:
@@ -284,7 +284,7 @@ class CubeHeuristics(Enum):
                     ), self.value.success_metric[target]
         elif self.name == "LowerLayer":
             # Find a candidate for this piece
-            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target], reference_face)
+            candidate_order, candidate = self.locate_match(candidates, self.value.success_metric[target])
 
             # Check if we're below and need adjustments to raise to top, or if we're above
             if candidate.arrangement in self.value.success_metric:
