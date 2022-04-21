@@ -44,14 +44,14 @@ class CubeArrangement(Enum):
         true_indexes: List[int]
         adjacencies: Set[int]
 
-    CORNER_A = PieceArrangement(PieceType.CORNER, [1, 30, 43], [0, 29, 42], {0, 4, 3})
-    CORNER_B = PieceArrangement(PieceType.CORNER, [3, 45, 10], [2, 44, 9], {0, 1, 4})
+    CORNER_A = PieceArrangement(PieceType.CORNER, [1, 30, 43], [0, 29, 42], {0, 3, 4})
+    CORNER_B = PieceArrangement(PieceType.CORNER, [3, 45, 10], [2, 44, 9], {0, 4, 1})
     CORNER_C = PieceArrangement(PieceType.CORNER, [9, 16, 48], [8, 15, 47], {0, 1, 5})
-    CORNER_D = PieceArrangement(PieceType.CORNER, [7, 46, 36], [6, 45, 35], {0, 3, 5})
-    CORNER_E = PieceArrangement(PieceType.CORNER, [19, 12, 39], [18, 11, 38], {1, 2, 4})
-    CORNER_F = PieceArrangement(PieceType.CORNER, [21, 37, 28], [20, 36, 27], {2, 3, 4})
+    CORNER_D = PieceArrangement(PieceType.CORNER, [7, 46, 36], [6, 45, 35], {0, 5, 3})
+    CORNER_E = PieceArrangement(PieceType.CORNER, [19, 12, 39], [18, 11, 38], {2, 1, 4})
+    CORNER_F = PieceArrangement(PieceType.CORNER, [21, 37, 28], [20, 36, 27], {2, 4, 3})
     CORNER_G = PieceArrangement(PieceType.CORNER, [27, 34, 52], [26, 33, 51], {2, 3, 5})
-    CORNER_H = PieceArrangement(PieceType.CORNER, [25, 54, 18], [24, 53, 17], {1, 2, 5})
+    CORNER_H = PieceArrangement(PieceType.CORNER, [25, 54, 18], [24, 53, 17], {2, 5, 1})
     EDGE_A   = PieceArrangement(PieceType.EDGE, [2, 44], [1, 43], {0, 4})
     EDGE_B   = PieceArrangement(PieceType.EDGE, [6, 13], [5, 12], {0, 1})
     EDGE_C   = PieceArrangement(PieceType.EDGE, [8, 47], [7, 46], {0, 5})
@@ -124,6 +124,10 @@ class CubeArrangement(Enum):
         )
         return sorted(pieces, key=lambda v: v.rm_index)
 
+    def __repr__(self):
+        return f"{self.name}, indexes={self.value.true_indexes}, adjacencies={self.value.adjacencies}"
+
+
 
 @dataclass
 class HeuristicsProperties:
@@ -179,11 +183,11 @@ class CubeHeuristics(Enum):
         adjustment_rotations=[],
         adjustment_exclusion=[],
         translation_parameters={
-            'F': lambda face, v: face != (0 + v) % 4,
-            'R': lambda face, v: face == (1 + v) % 4,
-            'L': lambda face, v: face == (3 + v) % 4,
-            'U': lambda face, _: face == 4,
-            'B': lambda face, _: face == 5
+            'F': lambda face, v: 0 if (face != (0 + v) % 4) else 1,
+            'R': lambda face, v: 0 if (face == (1 + v) % 4) else 1,
+            'L': lambda face, v: 0 if (face == (3 + v) % 4) else 1,
+            'U': lambda face, _: 0 if (face == 4) else 1,
+            'B': lambda face, _: 0 if (face == 5) else 1
         },
         arrangement_heuristic={
             'R' : ['EFG',   'HIJ',  'KDL',  'ABC'],
@@ -274,7 +278,7 @@ class CubeHeuristics(Enum):
                 if any(f'EDGE_{point}' in candidate.arrangement.name for point in self.get_operation(face, target)):
                     alt = self.value.translation_parameters[face](candidate.current_face, target)
                     return CubeHeuristics.translate_heuristics(
-                        self.value.heuristics[face][0 if alt else 1],
+                        self.value.heuristics[face][alt],
                         target,
                         ['']
                     ), self.value.success_metric[target]
@@ -389,7 +393,7 @@ class CubeHeuristics(Enum):
                 .replace(inverse_letter + letter, "")
         return moves
 
-    def locate_match(self, candidates, current_face, reference_block):
+    def locate_match(self, candidates, current_face):
         """ This function is concerned with picking out the component that exactly matches the one we're looking to insert.
             current_face: the current orientation from which we're visualizing the cube, needed to make sure we get the right index.
             reference_face: the block we're comparing against and trying to find a solution for
@@ -549,6 +553,10 @@ class CubePiece:
         temp = self.value
         self.value = new_value
         return temp
+    
+    def __repr__(self):
+        # Faces does not provide the ORDER of the faces, in this case, we must use the current value to determine the order dynamically
+        return f"index={self.index}, row_major={self.rm_index}, value={self.value}, current_face={self.current_face}, identity={self.arrangement.name}, faces={self.adjacent_faces}"
 
 
 class CubeFace(Enum):
@@ -897,7 +905,7 @@ class Cube:
                 # Apply rotations and append to rotation list if any were found
                 final_rotations += self._attempt_algorithms(heuristic, centerpiece)
 
-                # Check if all pieces have been solved for current phase (TODO: in the future, run all verifications in series to make sure a step hasn't broken another)
+                # Check if all pieces have been solved for current phase
                 if heuristic.get_pieces_solved(self._faces, self._pieces) == 4:
                     unsolved_pieces = False
                 elif remaining_iterations <= 0:
