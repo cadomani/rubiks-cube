@@ -340,16 +340,22 @@ class CubeHeuristics(Enum):
                     ), self.value.success_metric[target]
         elif self.name == "MiddleLayer":
             for candidate in candidates:
+                # Assume no rotations and that the moves are not lifting moves
                 rot = ""
                 lift = False
+                heur = ['']
+                
+                # Mark as lifting move if piece being moved is one in a middle layer or is on top and has the top color within it
                 if candidate.arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
                     lift = True
                 elif candidate.current_face == 4:
                     lift = True
                 
+                # Only apply rotations if the target face is different than the current face
                 if candidate.current_face != target:
                     rot += "u" * (((target - candidate.current_face) + 4) % 4)
-                heur = ['']
+                
+                # Decide which rotation should be made
                 left_side = ((target - 1) + 4) % 4
                 right_side = ((target + 1) + 4) % 4
                 if left_side in list(candidate.adjacent_faces):
@@ -359,7 +365,7 @@ class CubeHeuristics(Enum):
                         target,
                         [rot]
                     )
-                    return [self.minimize(adj_heur[0])], self.value.success_metric[left_side]
+                    return [self.minimize(adj_heur[0])], self.value.success_metric[left_side] if not lift else None
                 elif right_side in list(candidate.adjacent_faces):
                     heur = self.value.heuristics['R']
                     adj_heur = CubeHeuristics.translate_heuristics(
@@ -367,7 +373,7 @@ class CubeHeuristics(Enum):
                         target,
                         [rot]
                     )
-                    return [self.minimize(adj_heur[0])], self.value.success_metric[target]
+                    return [self.minimize(adj_heur[0])], self.value.success_metric[target] if not lift else None
             return [''], None
 
 
@@ -984,15 +990,16 @@ class Cube:
     def _attempt_algorithms(self, heuristic, centerpiece):
         # Parse through candidates to find best match
         new_rotations = ''
+        adj = 0
         for current_face in [0, 1, 2, 3]:
             
             # Identify candidates, but skip phases if they are marked as complete, or move to the next face when designated
             try:
                 # Identify candidates for current heuristic phase
-                candidates = heuristic.get_candidates(self._faces, self._pieces, targeted=current_face)
+                candidates = heuristic.get_candidates(self._faces, self._pieces, targeted=(current_face - adj))
                 
                 # Identify algorith or heuristic leading to a solution
-                algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face, centerpiece.adjacent_faces)
+                algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face - adj, centerpiece.adjacent_faces)
             except FaceAlreadySolved:
                 continue
             except PhaseAlreadySolved:
@@ -1008,9 +1015,12 @@ class Cube:
                     self._state.append(tentative)
                 self._reconstruct()
 
-
                 # Check for success by comparing block against success condition and passthrough transition steps
                 if success_condition is None or self._heuristic_success(success_condition):
+                    # Repeat current face if last move was a lifting move
+                    adj = 0 if success_condition else 1
+                    
+                    # Add new rotations and break out of this loop
                     new_rotations += heuristic_algorithm
                     break
 
