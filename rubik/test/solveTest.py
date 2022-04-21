@@ -273,7 +273,7 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            # 'solution': 'rRUrufuFBUburuRLUlubuBFUfuluL'
+            'solution': 'r'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -290,7 +290,7 @@ class SolveTest(unittest.TestCase):
         }
         expected = {
             'status': 'ok',
-            # 'solution': 'RRUrufuFBUburuRLUlubuBFUfuluL'
+            'solution': 'R'
         }
         result = solve._solve(parm)
         status = result.get('status', None)
@@ -299,7 +299,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_042_ShouldSolveComplexLastCrossPiece(self):
+    def test_solve_042_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '443303302550412532534424421302132022001141100551555413',
@@ -315,7 +315,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_043_ShouldSolveBottomCross(self):
+    def test_solve_043_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '440502105425110222255123152041431410301045023533453334',
@@ -331,7 +331,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_044_ShouldSolveBottomCross(self):
+    def test_solve_044_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '105302150312115455333021045054432325444140232221453001',
@@ -347,7 +347,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_045_ShouldSolveBottomCross(self):
+    def test_solve_045_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '232502120330412143401523505411433315043540424215051052',
@@ -363,7 +363,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_046_ShouldSolveBottomCrossWithComplexSolution(self):
+    def test_solve_046_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '004104055235214354211124052241030351421342533410352503',
@@ -379,7 +379,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_047_ShouldSolveBottomCrossWithComplexSolution(self):
+    def test_solve_047_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '510400103321113412401224421522330430230441345550555253',
@@ -395,7 +395,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    def test_solve_048_ShouldSolveBottomCrossMissedFromA4Grade(self):
+    def test_solve_048_ShouldSolveMiddleLayerWithCrossMissedFromA4Grade(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'CggCggCggzrrzrrzrrgCCgCCgCCzzrzzrzzrL333L3L333LLL3L3LL',
@@ -411,7 +411,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_049_ShouldSolveBottomLayerMissedFromA5Grade(self):
+    def test_solve_049_ShouldSolveMiddleLayerWithBottomLayerMissedFromA5Grade(self):
         parm = {
             'op'    : 'solve',
             'cube'  : 'qtDDttTtTqqDqTDDTLLTLTLtfLTfLtDqLfqDqLqqDDfTttfLffftfT',
@@ -427,7 +427,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_050_ShouldSolveBottomLayerFromStressTest(self):
+    def test_solve_050_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '425000121003511454412422033121534540552441013532353203',
@@ -443,7 +443,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_051_ShouldSolveBottomLayerFromStressTest(self):
+    def test_solve_051_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '210505201400310003523121252535232334041445143134254514',
@@ -459,7 +459,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_052_ShouldSolveBottomLayerFromStressTest(self):
+    def test_solve_052_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '201502033253411543501221234005533011530542114422450344',
@@ -475,7 +475,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_053_ShouldSolveBottomLayerFromStressTest(self):
+    def test_solve_053_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '405102322351310550201121440033435520554443232441152301',
@@ -491,7 +491,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    def test_solve_054_ShouldSolveBottomLayerFromStressTest(self):
+    def test_solve_054_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
             'cube'  : '130304510540213554104025354322032203044143551243151122',

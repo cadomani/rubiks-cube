@@ -90,3 +90,16 @@ class MissingCube(SolveError):
 class InvalidRotateCommand(SolveError):
     def __init__(self, problem_cube, rotate_command):
         super().__init__("error: the rotate command is invalid", problem_cube, rotate_command)
+        
+        
+class FaceAlreadySolved(SolveError):
+    """ Exception to be thrown when we need to bubble up a request to skip the current face. """
+    def __init__(self):
+        super().__init__("pass: face already solved", None, None)
+
+
+class PhaseAlreadySolved(SolveError):
+    """ Exception to be thrown when we need to bubble up a request to skip the current phase. """
+    def __init__(self):
+        super().__init__("pass: phase already solved", None, None)
+
