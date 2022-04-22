@@ -348,7 +348,7 @@ class CubeHeuristics(Enum):
                 # Mark as lifting move if piece being moved is one in a middle layer or is on top and has the top color within it
                 if candidate.arrangement in [CubeArrangement.EDGE_B, CubeArrangement.EDGE_F, CubeArrangement.EDGE_I, CubeArrangement.EDGE_D]:
                     lift = True
-                elif candidate.current_face == 4:
+                elif 4 in list(candidate.adjacent_faces):
                     lift = True
                 
                 # Only apply rotations if the target face is different than the current face
@@ -996,7 +996,7 @@ class Cube:
             # Identify candidates, but skip phases if they are marked as complete, or move to the next face when designated
             try:
                 # Identify candidates for current heuristic phase
-                candidates = heuristic.get_candidates(self._faces, self._pieces, targeted=(current_face - adj))
+                candidates = heuristic.get_candidates(self._faces, self._pieces, targeted=current_face - adj)
                 
                 # Identify algorith or heuristic leading to a solution
                 algorithm, success_condition = heuristic.get_algorithm_by_arrangement(candidates, current_face - adj, centerpiece.adjacent_faces)
