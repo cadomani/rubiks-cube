@@ -348,7 +348,7 @@ class SolveTest(unittest.TestCase):
         # rotations = result.get('solution', None)
         # self.assertEqual(expected['solution'], rotations)
 
-    @unittest.skip("skip to ensure non-edge cases pass first")
+    # @unittest.skip("skip to ensure non-edge cases pass first")
     def test_solve_045_ShouldSolveMiddleLayer(self):
         parm = {
             'op'    : 'solve',
@@ -461,7 +461,7 @@ class SolveTest(unittest.TestCase):
         # solution = result.get('solution', None)
         # self.assertEqual(expected['solution'], solution)
 
-    @unittest.skip("skip to ensure non-edge cases pass first")
+    # @unittest.skip("skip to ensure non-edge cases pass first")
     def test_solve_052_ShouldSolveMiddleLayerFromStressTest(self):
         parm = {
             'op'    : 'solve',
